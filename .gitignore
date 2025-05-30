@@ -23,3 +23,26 @@ go.work.sum
 
 # env file
 .env
+
+# Visual Studio Code settings
+.vscode/
+
+# Firebase
+.firebase/
+firebase-debug.log
+**/serviceAccountKey.json
+
+# Redis
+dump.rdb
+appendonly.aof
+
+# Google Cloud SDK configuration directory
+.gcloud/
+
+# Google App Engine specific files
+app.yaml
+appengine_config.py
+
+# Google Cloud Build configuration files
+cloudbuild.yaml
+cloudbuild-*.yaml
