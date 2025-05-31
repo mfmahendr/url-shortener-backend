@@ -1,10 +1,10 @@
 package dto
 
-type ShortenerRequest struct {
+type ShortenRequest struct {
 	URL      string `json:"url" validate:"required,url"`
 	CustomID string `json:"custom_id" validate:"omitempty,short_id"`
 }
 
-type ShortenerResponse struct {
+type ShortenResponse struct {
 	ShortID string `json:"short_id"`
 }
