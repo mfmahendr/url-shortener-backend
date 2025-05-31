@@ -16,9 +16,10 @@ type Controller interface {
 type URLController struct {
 	Service url_service.URLService
 	Router  *httprouter.Router
+	Controller
 }
 
-func New(s url_service.URLService) Controller {
+func New(s url_service.URLService) *URLController {
 	return &URLController{
 		Service: s,
 		Router:  httprouter.New(),
