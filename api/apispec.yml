@@ -1,0 +1,94 @@
+openapi: '3.0.3'
+info:
+  title: URL Shortener API
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+paths:
+  /shorten:
+    post:
+      summary: Create a shortened URL
+      description: Accepts a URL and returns its shortened version.
+      requestBody:
+        description: Original URL to be shortened.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  example: https://example.com/this-is-a-very-long-url
+                custom_id:
+                  type: string
+                  format: uri
+                  example: short_url
+      responses:
+        '201':
+          description: URL successfully shortened.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shortUrl:
+                    type: string
+                    example: http://localhost:8080/short_url
+        '400':
+          description: Invalid request body or URL supplied.
+        '422':
+          description: Unprocessable entity (validation error).
+        '409':
+          description: Conflict (ID already exists).
+        '403':
+          description: Forbidden (blacklisted ID).
+        '500':
+          description: Internal server error.
+
+  /{short_id}:
+    get:
+      summary: Redirect to the original URL
+      description: Resolves a shortened URL and redirects to the original URL.
+      parameters:
+        - name: short_id
+          in: path
+          description: The shortened URL ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the original URL.
+        '404':
+          description: Shortened URL not found.
+        '500':
+          description: Internal server error.
+security:
+  - firebaseAuth: []
+
+components:
+  securitySchemes:
+    firebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Firebase Authentication using email and password. Include the Firebase ID token in the Authorization header as a Bearer token.
+
+  # /:
+  #   get:
+  #     summary: Root endpoint
+  #     description: Returns a welcome message or API information.
+  #     responses:
+  #       '200':
+  #         description: Successful response with API welcome information.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Welcome to the URL Shortener API!
