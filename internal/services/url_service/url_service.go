@@ -21,11 +21,11 @@ type URLService interface {
 }
 
 type URLServiceImpl struct {
-	firestore firestore_service.FirestoreService
+	firestore firestore_service.Shortlink
 }
 
-func New(firestoreService firestore_service.FirestoreService) URLService {
-	return &URLServiceImpl{firestore: firestoreService}
+func New(shortlinkService firestore_service.Shortlink) URLService {
+	return &URLServiceImpl{firestore: shortlinkService}
 }
 
 func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenerRequest) (shortID string, err error) {
