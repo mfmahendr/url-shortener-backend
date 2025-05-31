@@ -9,6 +9,7 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	firestore_service "github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
 )
 
@@ -29,6 +30,11 @@ func (s *URLService) Shorten(ctx context.Context, url, customID string) (shortID
 			return "", shortlink_errors.ErrGenerateID
 		}
 	} else {
+		//  blacklist some keywords
+		if utils.BlacklistedCustomIDs[customID] {
+			return "", shortlink_errors.ErrBlacklistedID
+		}
+
 		// check exists
 		doc, err := s.Firestore.GetShortlink(ctx, customID)
 		if err == nil && doc.Exists() {
