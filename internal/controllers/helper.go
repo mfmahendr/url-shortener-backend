@@ -11,7 +11,7 @@ func mapErrorToStatusCode(err error) (statusCode int) {
 		statusCode = http.StatusForbidden
 	case errors.Is(err, shortlink_errors.ErrIDExists):
 		statusCode = http.StatusConflict
-	case errors.Is(err, shortlink_errors.ErrGenerateID), errors.Is(err, shortlink_errors.ErrSaveShortlink):
+	case errors.Is(err, shortlink_errors.ErrGenerateID), errors.Is(err, shortlink_errors.ErrSaveShortlink), errors.Is(err, shortlink_errors.ErrRetrieveData):
 		statusCode = http.StatusInternalServerError
 	case errors.Is(err, shortlink_errors.ErrValidateRequest):
 		statusCode = http.StatusUnprocessableEntity

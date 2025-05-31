@@ -20,7 +20,7 @@ func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
-	shortID, err := c.Service.Shorten(ctx, req)
+	shortID, err := c.ShortenService.Shorten(ctx, req)
 	if err != nil {
 		statusCode := mapErrorToStatusCode(err)
 		http.Error(w, "Failed to shorten URL: "+err.Error(), statusCode)
