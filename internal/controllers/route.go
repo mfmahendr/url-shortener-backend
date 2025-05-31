@@ -2,14 +2,16 @@ package controllers
 
 import (
 	"net/http"
+
+	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
 )
 
 
 type RouteRegistrar interface {
-	RegisterRoutes()
+	RegisterRoutes(authMiddleware middleware.AuthMiddleware)
 }
 
-func (c *URLController) RegisterRoutes() {
-	c.Router.Handle(http.MethodPost, "/shorten", c.Shorten)
+func (c *URLController) RegisterRoutes(authMiddleware middleware.AuthMiddleware) {
+	c.Router.Handle(http.MethodPost, "/shorten", authMiddleware.RequireAuth(c.Shorten))
 	c.Router.Handle(http.MethodGet, "/:short_id", c.Redirect)
 }
