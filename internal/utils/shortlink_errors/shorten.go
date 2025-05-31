@@ -7,4 +7,5 @@ var (
     ErrIDExists      = errors.New("custom ID already exists")
     ErrGenerateID    = errors.New("failed to generate ID")
     ErrSaveShortlink = errors.New("failed to save short link")
+    ErrValidateRequest = errors.New("invalid request data")
 )

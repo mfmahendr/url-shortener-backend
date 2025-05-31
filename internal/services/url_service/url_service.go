@@ -8,9 +8,11 @@ import (
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
+	"github.com/mfmahendr/url-shortener-backend/internal/dto"
 	firestore_service "github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
+	val "github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 )
 
 type URLService struct {
@@ -21,8 +23,12 @@ func New(firestoreService *firestore_service.FirestoreService) *URLService {
 	return &URLService{Firestore: firestoreService}
 }
 
-func (s *URLService) Shorten(ctx context.Context, url, customID string) (shortID string, err error) {
-	if customID == "" {
+func (s *URLService) Shorten(ctx context.Context, req dto.ShortenerRequest) (shortID string, err error) {
+	if err := val.Validate.Struct(req); err != nil {
+		return "", shortlink_errors.ErrValidateRequest
+	}
+	
+	if req.CustomID == "" {
 		// generate short id with nanoid
 		shortID, err = nanoid.New()
 		if err != nil {
@@ -31,21 +37,21 @@ func (s *URLService) Shorten(ctx context.Context, url, customID string) (shortID
 		}
 	} else {
 		//  blacklist some keywords
-		if utils.BlacklistedCustomIDs[customID] {
+		if utils.BlacklistedCustomIDs[req.CustomID] {
 			return "", shortlink_errors.ErrBlacklistedID
 		}
 
 		// check exists
-		doc, err := s.Firestore.GetShortlink(ctx, customID)
+		doc, err := s.Firestore.GetShortlink(ctx, req.CustomID)
 		if err == nil && doc.Exists() {
 			return "", shortlink_errors.ErrIDExists
 		}
-		shortID = customID
+		shortID = req.CustomID
 	}
 
 	doc := map[string]interface{}{
 		"short_id":   shortID,
-		"url":        url,
+		"url":        req.URL,
 		"created_at": time.Now(),
 	}
 
@@ -58,6 +64,10 @@ func (s *URLService) Shorten(ctx context.Context, url, customID string) (shortID
 }
 
 func (s *URLService) Resolve(ctx context.Context, shortID string) (string, error) {
+	if err := val.Validate.Var(shortID, "short_id"); err != nil {
+		return "", shortlink_errors.ErrValidateRequest
+	}
+
 	doc, err := s.Firestore.GetShortlink(ctx, shortID)
 	if err != nil || !doc.Exists() {
 		return "", errors.New("not found")
