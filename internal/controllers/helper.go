@@ -26,3 +26,16 @@ func mapErrorToStatusCode(err error) (statusCode int) {
 	}
 	return statusCode
 }
+
+func verifyOwnerAccess(w http.ResponseWriter, err error, isOwner bool) bool {
+	if err != nil {
+		statusCode := mapErrorToStatusCode(err)
+		http.Error(w, "Failed to check ownership: "+err.Error(), statusCode)
+		return true
+	}
+	if !isOwner {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return true
+	}
+	return false
+}
