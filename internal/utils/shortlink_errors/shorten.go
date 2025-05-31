@@ -8,4 +8,5 @@ var (
     ErrGenerateID    = errors.New("failed to generate ID")
     ErrSaveShortlink = errors.New("failed to save short link")
     ErrValidateRequest = errors.New("invalid request data")
+    ErrRetrieveData = errors.New("failed to retrieve data from database")
 )
