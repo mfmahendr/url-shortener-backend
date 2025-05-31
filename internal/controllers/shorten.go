@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"net/http"
 
 	"encoding/json"
@@ -11,9 +10,14 @@ import (
 )
 
 func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx := context.Background()
+	ctx := r.Context()
+	_, ok := ctx.Value("user").(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	var req dto.ShortenerRequest
+	var req dto.ShortenRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil || req.URL == "" {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -27,7 +31,7 @@ func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
-	response := dto.ShortenerResponse{ShortID: shortID}
+	response := dto.ShortenResponse{ShortID: shortID}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
