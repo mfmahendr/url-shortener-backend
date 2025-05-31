@@ -2,13 +2,13 @@ package url_service
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
+	"github.com/mfmahendr/url-shortener-backend/internal/models"
 	firestore_service "github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
@@ -16,8 +16,9 @@ import (
 )
 
 type URLService interface {
-	Shorten(ctx context.Context, req dto.ShortenerRequest) (shortID string, err error)
+	Shorten(ctx context.Context, req dto.ShortenRequest) (shortID string, err error)
 	Resolve(ctx context.Context, shortID string) (string, error)
+	IsOwner(ctx context.Context, shortID string, uid string) (bool, error)
 }
 
 type URLServiceImpl struct {
@@ -28,7 +29,7 @@ func New(shortlinkService firestore_service.Shortlink) URLService {
 	return &URLServiceImpl{firestore: shortlinkService}
 }
 
-func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenerRequest) (shortID string, err error) {
+func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (shortID string, err error) {
 	if err := val.Validate.Struct(req); err != nil {
 		return "", shortlink_errors.ErrValidateRequest
 	}
@@ -47,17 +48,19 @@ func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenerRequest) 
 		}
 
 		// check exists
-		doc, err := s.firestore.GetShortlink(ctx, req.CustomID)
-		if err == nil && doc.Exists() {
+		_, err := s.firestore.GetShortlink(ctx, req.CustomID)
+		if err != nil && err != shortlink_errors.ErrNotFound {
 			return "", shortlink_errors.ErrIDExists
 		}
 		shortID = req.CustomID
 	}
 
-	doc := map[string]interface{}{
-		"short_id":   shortID,
-		"url":        req.URL,
-		"created_at": time.Now(),
+	user := ctx.Value("uid")
+	doc := models.Shortlink{
+		ShortID:   shortID,
+		URL:       req.URL,
+		CreatedAt: time.Now(),
+		CreatedBy: user.(string),
 	}
 
 	error := s.firestore.SetShortlink(ctx, shortID, doc)
@@ -73,10 +76,20 @@ func (s *URLServiceImpl) Resolve(ctx context.Context, shortID string) (string, e
 		return "", shortlink_errors.ErrValidateRequest
 	}
 
-	doc, err := s.firestore.GetShortlink(ctx, shortID)
-	if err != nil || !doc.Exists() {
-		return "", errors.New("not found")
+	shortlink, err := s.firestore.GetShortlink(ctx, shortID)
+	if err != nil {
+		return "", err
 	}
-	url, _ := doc.DataAt("url")
-	return url.(string), nil
+
+	return shortlink.URL, nil
+}
+
+func (s *URLServiceImpl) IsOwner(ctx context.Context, shortID string, uid string) (bool, error) {
+	shortlink, err := s.firestore.GetShortlink(ctx, shortID)
+	if err != nil {
+		return false, err
+	}
+
+	createdBy := shortlink.CreatedBy
+	return createdBy == uid, nil
 }
