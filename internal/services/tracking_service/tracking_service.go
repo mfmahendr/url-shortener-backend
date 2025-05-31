@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
+	"github.com/mfmahendr/url-shortener-backend/internal/models"
 	firestore "github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
@@ -21,7 +22,7 @@ func New(fs firestore.ClickLog, redis *redis.Client) *TrackingService {
 }
 
 func (t *TrackingService) TrackClick(ctx context.Context, shortID, ip, userAgent string) error {
-	if err := validators.Validate.Var(shortID, "shortID"); err != nil {
+	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return shortlink_errors.ErrValidateRequest
 	}
 	// redis
@@ -29,11 +30,11 @@ func (t *TrackingService) TrackClick(ctx context.Context, shortID, ip, userAgent
 		return err
 	}
 
-	clickLog := map[string]interface{}{
-		"short_id":   shortID,
-		"ip":         ip,
-		"user_agent": userAgent,
-		"timestamp":  time.Now(),
+	clickLog := &models.ClickLog{
+		ShortID:    shortID,
+		IP:         ip,
+		UserAgent:  userAgent,
+		Timestamp:  time.Now(),
 	}
 
 	// save to firestore
@@ -41,7 +42,7 @@ func (t *TrackingService) TrackClick(ctx context.Context, shortID, ip, userAgent
 }
 
 func (t *TrackingService) GetClickCount(ctx context.Context, shortID string) (int64, error) {
-	if err := validators.Validate.Var(shortID, "shortID"); err != nil {
+	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return 0, shortlink_errors.ErrValidateRequest
 	}
 
@@ -57,7 +58,7 @@ func (t *TrackingService) GetClickCount(ctx context.Context, shortID string) (in
 }
 
 func (t *TrackingService) GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error) {
-	if err := validators.Validate.Var(shortID, "shortID"); err != nil {
+	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return nil, shortlink_errors.ErrValidateRequest
 	}
 
