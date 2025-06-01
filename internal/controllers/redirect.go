@@ -27,7 +27,7 @@ func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httpr
 			ip = strings.Split(forwarded, ",")[0]
 		}
 		ua := r.UserAgent()
-		c.TrackingService.TrackClick(ctx, shortID, ua, ip)
+		c.TrackingService.TrackClick(ctx, shortID, ip, ua)
 	}(ctx, r, shortID)
 
 	http.Redirect(w, r, url, http.StatusFound)
