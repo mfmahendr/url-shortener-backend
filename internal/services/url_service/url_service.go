@@ -55,12 +55,17 @@ func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (s
 		shortID = req.CustomID
 	}
 
-	user := ctx.Value("uid")
+	user, ok := ctx.Value("user").(string)
+	if !ok {
+		log.Println("User not found in context")
+		return "", shortlink_errors.ErrValidateRequest
+	}
+	
 	doc := models.Shortlink{
 		ShortID:   shortID,
 		URL:       req.URL,
 		CreatedAt: time.Now(),
-		CreatedBy: user.(string),
+		CreatedBy: user,
 	}
 
 	error := s.firestore.SetShortlink(ctx, shortID, doc)
