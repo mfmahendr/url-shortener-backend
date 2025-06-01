@@ -3,7 +3,6 @@ package firestore_service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/mfmahendr/url-shortener-backend/internal/models"
@@ -13,8 +12,8 @@ import (
 
 type ClickLog interface {
 	AddClickLog(ctx context.Context, doc interface{}) error
-	GetClickLog(ctx context.Context, shortID string) (*firestore.DocumentSnapshot, error)
-	GetAnalytics(ctx context.Context, shortID string) (int, []models.ClickLog, error)
+	GetClickLogs(ctx context.Context, shortID string) ([]models.ClickLog, error)
+	GetAnalytics(ctx context.Context, shortID string) (int64, []models.ClickLog, error)
 }
 
 func (s *FirestoreServiceImpl) AddClickLog(ctx context.Context, doc interface{}) error {
@@ -25,23 +24,48 @@ func (s *FirestoreServiceImpl) AddClickLog(ctx context.Context, doc interface{})
 	return nil
 }
 
-func (s *FirestoreServiceImpl) GetClickLog(ctx context.Context, shortID string) (*firestore.DocumentSnapshot, error) {
-	docSnap, err := s.client.Collection("click_logs").Doc(shortID).Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get click log: %w", err)
-	}
-	return docSnap, nil
-}
-
-func (s *FirestoreServiceImpl) GetAnalytics(ctx context.Context, shortID string) (int, []models.ClickLog, error) {
+func (s *FirestoreServiceImpl) GetClickLogs(ctx context.Context, shortID string) ([]models.ClickLog, error) {
 	iter := s.client.Collection("click_logs").
 		Where("short_id", "==", shortID).
 		OrderBy("timestamp", firestore.Desc).
 		Limit(100).
 		Documents(ctx)
+	defer iter.Stop()
 
 	var logs []models.ClickLog
-	count := 0
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			fmt.Printf("Error retrieving document: %v\n", err)
+			return nil, shortlink_errors.ErrFailedRetrieveData
+		}
+
+		var clickLog models.ClickLog
+		if err := doc.DataTo(&clickLog); err != nil {
+			fmt.Printf("Error converting document data to ClickLog: %v\n", err)
+			return nil, shortlink_errors.ErrFailedRetrieveData
+		}
+
+		logs = append(logs, clickLog)
+	}
+
+	return logs, nil
+}
+
+
+func (s *FirestoreServiceImpl) GetAnalytics(ctx context.Context, shortID string) (int64, []models.ClickLog, error) {
+	iter := s.client.Collection("click_logs").
+		Where("short_id", "==", shortID).
+		OrderBy("timestamp", firestore.Desc).
+		Limit(100).
+		Documents(ctx)
+	defer iter.Stop()
+
+	var logs []models.ClickLog
+	var count int64 = 0
 
 	for {
 		doc, err := iter.Next()
@@ -49,25 +73,18 @@ func (s *FirestoreServiceImpl) GetAnalytics(ctx context.Context, shortID string)
 			break
 		}
 		if err != nil {
+			fmt.Printf("Error retrieving document: %v\n", err)
 			return 0, nil, shortlink_errors.ErrFailedRetrieveData
 		}
 
-		data := doc.Data()
+		var clickLog models.ClickLog
+		if err := doc.DataTo(&clickLog); err != nil {
+			fmt.Printf("Error converting document data to ClickLog: %v\n", err)
+			return 0, nil, shortlink_errors.ErrFailedRetrieveData
+		}
 
-		timestamp, _ := data["timestamp"].(time.Time)
-		ip, _ := data["ip"].(string)
-		ua, _ := data["user_agent"].(string)
-
-		logs = append(logs, models.ClickLog{
-			Timestamp: timestamp,
-			IP:        ip,
-			UserAgent: ua,
-		})
+		logs = append(logs, clickLog)
 		count++
-	}
-
-	if count == 0 {
-		return 0, nil, shortlink_errors.ErrNotFound
 	}
 
 	return count, logs, nil

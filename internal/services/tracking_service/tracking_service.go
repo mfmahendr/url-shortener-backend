@@ -64,12 +64,12 @@ func (t *TrackingServiceImpl) GetClickCount(ctx context.Context, shortID string)
 	return count, nil
 }
 
-func (t *TrackingService) GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error) {
+func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error) {
 	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return nil, shortlink_errors.ErrValidateRequest
 	}
 
-	count, logs, err := t.Firestore.GetAnalytics(ctx, shortID)
+	count, logs, err := t.firestore.GetAnalytics(ctx, shortID)
 	if err != nil {
 		return nil, err
 	}
