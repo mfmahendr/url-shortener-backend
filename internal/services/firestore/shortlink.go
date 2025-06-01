@@ -9,7 +9,7 @@ import (
 )
 
 type Shortlink interface {
-	DeleteShortlink(ctx context.Context, shortID string) error
+	// DeleteShortlink(ctx context.Context, shortID string) error
 	GetShortlink(ctx context.Context, shortID string) (*models.Shortlink, error)
 	SetShortlink(ctx context.Context, shortID string, doc models.Shortlink) error
 }
