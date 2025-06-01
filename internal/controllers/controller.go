@@ -12,9 +12,10 @@ type URLController struct {
 	Router          *httprouter.Router
 }
 
-func New(s url_service.URLService) *URLController {
+func New(shorten url_service.URLService, tracking tracking_service.TrackingService) *URLController {
 	return &URLController{
-		ShortenService: s,
-		Router:         httprouter.New(),
+		ShortenService:  shorten,
+		TrackingService: tracking,
+		Router:          httprouter.New(),
 	}
 }

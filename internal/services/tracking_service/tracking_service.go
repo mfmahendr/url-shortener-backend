@@ -1,3 +1,4 @@
+
 package tracking_service
 
 import (
@@ -12,21 +13,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type TrackingService struct {
-	Firestore firestore.ClickLog
-	Redis     *redis.Client
+type TrackingService interface {
+	GetClickCount(ctx context.Context, shortID string) (int64, error)
+	TrackClick(ctx context.Context, shortID, ip, userAgent string) error
+	GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error)
 }
 
-func New(fs firestore.ClickLog, redis *redis.Client) *TrackingService {
-	return &TrackingService{Firestore: fs, Redis: redis}
+type TrackingServiceImpl struct {
+	firestore firestore.ClickLog
+	redis     *redis.Client
 }
 
-func (t *TrackingService) TrackClick(ctx context.Context, shortID, ip, userAgent string) error {
+func New(fs firestore.ClickLog, redis *redis.Client) TrackingService {
+	return &TrackingServiceImpl{firestore: fs, redis: redis}
+}
+
+func (t *TrackingServiceImpl) TrackClick(ctx context.Context, shortID, ip, userAgent string) error {
 	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return shortlink_errors.ErrValidateRequest
 	}
 	// redis
-	if err := t.Redis.Incr(ctx, "clicks:"+shortID).Err(); err != nil {
+	if err := t.redis.Incr(ctx, "clicks:"+shortID).Err(); err != nil {
 		return err
 	}
 
@@ -38,15 +45,15 @@ func (t *TrackingService) TrackClick(ctx context.Context, shortID, ip, userAgent
 	}
 
 	// save to firestore
-	return t.Firestore.AddClickLog(ctx, clickLog)
+	return t.firestore.AddClickLog(ctx, clickLog)
 }
 
-func (t *TrackingService) GetClickCount(ctx context.Context, shortID string) (int64, error) {
+func (t *TrackingServiceImpl) GetClickCount(ctx context.Context, shortID string) (int64, error) {
 	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
 		return 0, shortlink_errors.ErrValidateRequest
 	}
 
-	count, err := t.Redis.Get(ctx, "clicks:"+shortID).Int64()
+	count, err := t.redis.Get(ctx, "clicks:"+shortID).Int64()
 	if err != nil {
 		if err == redis.Nil {
 			return 0, nil

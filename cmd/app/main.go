@@ -8,25 +8,27 @@ import (
 
 	"github.com/mfmahendr/url-shortener-backend/config"
 	"github.com/mfmahendr/url-shortener-backend/internal/di"
-	val "github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 )
 
 func main() {
 	if err := config.LoadEnv(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-
-	val.Init()
-
-	// initialize the controller and services using dependency injection
+	
 	ctx := context.Background()
-	controller, err := di.InitializeController(ctx)
+
+	validators.Init()
+	firebaseApp := config.InitFirebase(ctx)
+	
+	// initialize the controller and services using dependency injection
+	controller, err := di.InitializeController(ctx, firebaseApp)
 	if err != nil {
 		log.Fatalf("failed to initialize app: %v", err)
 	}
 
 	// middleware and routes setup
-	authMiddleware, err := di.InitializeAuthMiddleware(ctx)
+	authMiddleware, err := di.InitializeAuthMiddleware(firebaseApp)
 	if err != nil {
 		log.Fatalf("failed to initialize auth middleware: %v", err)
 	}

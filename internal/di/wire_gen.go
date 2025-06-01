@@ -8,29 +8,31 @@ package di
 
 import (
 	"context"
+	"firebase.google.com/go/v4"
 	"github.com/google/wire"
 	"github.com/mfmahendr/url-shortener-backend/config"
 	"github.com/mfmahendr/url-shortener-backend/internal/controllers"
 	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
+	"github.com/mfmahendr/url-shortener-backend/internal/services/tracking_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/url_service"
 )
 
 // Injectors from wire.go:
 
-func InitializeController(ctx context.Context) (*controllers.URLController, error) {
-	app := config.InitFirebase(ctx)
-	firestoreService, err := firestore_service.New(ctx, app)
+func InitializeController(ctx context.Context, app *firebase.App) (*controllers.URLController, error) {
+	firestoreServiceImpl, err := firestore_service.New(ctx, app)
 	if err != nil {
 		return nil, err
 	}
-	urlService := url_service.New(firestoreService)
-	urlController := controllers.New(urlService)
+	urlService := url_service.New(firestoreServiceImpl)
+	client := config.NewRedisClient()
+	trackingService := tracking_service.New(firestoreServiceImpl, client)
+	urlController := controllers.New(urlService, trackingService)
 	return urlController, nil
 }
 
-func InitializeAuthMiddleware(ctx context.Context) (*middleware.AuthMiddleware, error) {
-	app := config.InitFirebase(ctx)
+func InitializeAuthMiddleware(app *firebase.App) (*middleware.AuthMiddleware, error) {
 	authMiddleware, err := middleware.NewAuthMiddleware(app)
 	if err != nil {
 		return nil, err
@@ -41,3 +43,5 @@ func InitializeAuthMiddleware(ctx context.Context) (*middleware.AuthMiddleware, 
 // wire.go:
 
 var firebaseAppSet = wire.NewSet(config.InitFirebase)
+
+var firestoreServiceSet = wire.NewSet(firestore_service.New, wire.Bind(new(firestore_service.FirestoreService), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.Shortlink), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.ClickLog), new(*firestore_service.FirestoreServiceImpl)))
