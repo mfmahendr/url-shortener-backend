@@ -1,6 +1,23 @@
 package utils
 
 var BlacklistedCustomIDs  = map[string]bool{
+	"home":     true,
+	"health":   true,
+	"health-check":  true,
+	"analytics": true,
+	"click-count": true,
+	"clicks":   true,
+	"create":   true,
+	"update":   true,
+	"delete":   true,
+	"edit":     true,
+	"view":     true,
+	"list":     true,
+	"search":   true,
+	"settings": true,
+	"config":   true,
+	"status":   true,
+	"error":    true,
 	"admin":    true,
 	"api":      true,
 	"shorten":  true,
