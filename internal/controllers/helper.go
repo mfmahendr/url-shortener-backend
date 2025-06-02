@@ -4,7 +4,10 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/mfmahendr/url-shortener-backend/internal/dto"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
 )
 
@@ -38,4 +41,24 @@ func verifyOwnerAccess(w http.ResponseWriter, err error, isOwner bool) bool {
 		return true
 	}
 	return false
+}
+
+func parseClickLogsQuery(r *http.Request, query *dto.ClickLogsQuery) {
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil {
+			query.Limit = parsed
+		}
+	}
+
+	query.Cursor = r.URL.Query().Get("cursor")
+	query.OrderDesc = r.URL.Query().Get("order") == "desc"
+
+	if after := r.URL.Query().Get("after"); after != "" {
+		t, _ := time.Parse(time.RFC3339, after)
+		query.After = t
+	}
+	if before := r.URL.Query().Get("before"); before != "" {
+		t, _ := time.Parse(time.RFC3339, before)
+		query.Before = t
+	}
 }

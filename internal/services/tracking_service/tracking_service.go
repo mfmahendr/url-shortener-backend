@@ -1,8 +1,8 @@
-
 package tracking_service
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
@@ -16,7 +16,7 @@ import (
 type TrackingService interface {
 	GetClickCount(ctx context.Context, shortID string) (int64, error)
 	TrackClick(ctx context.Context, shortID, ip, userAgent string) error
-	GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error)
+	GetAnalytics(ctx context.Context, query dto.ClickLogsQuery) (*dto.AnalyticsDTO, error)
 }
 
 type TrackingServiceImpl struct {
@@ -38,10 +38,10 @@ func (t *TrackingServiceImpl) TrackClick(ctx context.Context, shortID, ip, userA
 	}
 
 	clickLog := &models.ClickLog{
-		ShortID:    shortID,
-		IP:         ip,
-		UserAgent:  userAgent,
-		Timestamp:  time.Now(),
+		ShortID:   shortID,
+		IP:        ip,
+		UserAgent: userAgent,
+		Timestamp: time.Now(),
 	}
 
 	// save to firestore
@@ -64,20 +64,33 @@ func (t *TrackingServiceImpl) GetClickCount(ctx context.Context, shortID string)
 	return count, nil
 }
 
-func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, shortID string) (*dto.AnalyticsDTO, error) {
-	if err := validators.Validate.Var(shortID, "short_id"); err != nil {
+func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, query dto.ClickLogsQuery) (*dto.AnalyticsDTO, error) {
+	if err := validators.Validate.Struct(query); err != nil {
+		log.Println("Validation error:", err)
 		return nil, shortlink_errors.ErrValidateRequest
 	}
 
-	count, logs, err := t.firestore.GetAnalytics(ctx, shortID)
+	logs, nextCursor, err := t.firestore.GetClickLogs(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
+	dtoLogs := make([]dto.ClickLogDTO, 0, len(logs))
+	var count int64 = 0
+	for _, l := range logs {
+		dtoLogs = append(dtoLogs, dto.ClickLogDTO{
+			Timestamp: l.Timestamp,
+			IP:        l.IP,
+			UserAgent: l.UserAgent,
+		})
+		count++
+	}
+
 	responseData := &dto.AnalyticsDTO{
-		ShortID:     shortID,
+		ShortID:     query.ShortID,
 		TotalClicks: count,
-		Clicks:      logs,
+		Clicks:      dtoLogs,
+		NextCursor:  nextCursor,
 	}
 
 	return responseData, nil
