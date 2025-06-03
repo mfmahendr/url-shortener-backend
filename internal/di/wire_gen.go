@@ -28,15 +28,13 @@ func InitializeController(ctx context.Context, app *firebase.App) (*controllers.
 	urlService := url_service.New(firestoreServiceImpl)
 	client := config.NewRedisClient()
 	trackingService := tracking_service.New(firestoreServiceImpl, client)
-	urlController := controllers.New(urlService, trackingService)
+	slidingWindowLimiter := middleware.NewRateLimiter(client)
+	urlController := controllers.New(urlService, trackingService, slidingWindowLimiter)
 	return urlController, nil
 }
 
 func InitializeAuthMiddleware(app *firebase.App) (*middleware.AuthMiddleware, error) {
-	authMiddleware, err := middleware.NewAuthMiddleware(app)
-	if err != nil {
-		return nil, err
-	}
+	authMiddleware := middleware.NewAuthMiddleware(app)
 	return authMiddleware, nil
 }
 

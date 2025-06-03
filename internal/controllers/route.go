@@ -1,17 +1,17 @@
 package controllers
 
 import (
-	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
+	mw "github.com/mfmahendr/url-shortener-backend/internal/middleware"
 )
 
-func (c *URLController) RegisterRoutes(authMiddleware middleware.AuthMiddleware) {
-	c.Router.GET("/", c.Home)
-	c.Router.GET("/health", c.HealthCheck)
+func (c *URLController) RegisterRoutes(auth mw.AuthMiddleware) {
+	c.Router.GET("/", c.RateLimiter.Apply(c.Home))
+	c.Router.GET("/health", c.RateLimiter.Apply(c.HealthCheck))
 
-	c.Router.POST("/shorten", authMiddleware.RequireAuth(c.Shorten))
-	c.Router.GET("/:short_id", c.Redirect)
+	c.Router.POST("/shorten", c.RateLimiter.Apply(auth.RequireAuth(c.Shorten)))
+	c.Router.GET("/:short_id", c.RateLimiter.Apply(c.Redirect))
 
-	c.Router.GET("/:short_id/click-count", authMiddleware.RequireAuth(c.GetClickCount))
-	c.Router.GET("/:short_id/analytics", authMiddleware.RequireAuth(c.Analytics))
+	c.Router.GET("/:short_id/click-count", c.RateLimiter.Apply(auth.RequireAuth(c.GetClickCount)))
+	c.Router.GET("/:short_id/analytics", c.RateLimiter.Apply(auth.RequireAuth(c.Analytics)))
 
 }

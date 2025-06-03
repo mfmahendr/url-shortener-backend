@@ -19,7 +19,7 @@ func (c *URLController) Analytics(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	isOwner, err := c.ShortenService.IsOwner(ctx, shortID, user)
+	isOwner, err := c.shortenService.IsOwner(ctx, shortID, user)
 	if verifyOwnerAccess(w, err, isOwner) {
 		return
 	}
@@ -31,7 +31,7 @@ func (c *URLController) Analytics(w http.ResponseWriter, r *http.Request, ps htt
 	parseClickLogsQuery(r, query)
 
 	// Fetch analytics data
-	responseData, err := c.TrackingService.GetAnalytics(ctx, *query)
+	responseData, err := c.trackingService.GetAnalytics(ctx, *query)
 	if err != nil {
 		statusCode := mapErrorToStatusCode(err)
 		http.Error(w, "Failed to fetch analytics", statusCode)

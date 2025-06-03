@@ -18,12 +18,12 @@ func (c *URLController) GetClickCount(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	isOwner, err := c.ShortenService.IsOwner(ctx, shortID, user)
+	isOwner, err := c.shortenService.IsOwner(ctx, shortID, user)
 	if verifyOwnerAccess(w, err, isOwner) {
 		return
 	}
 
-	count, err := c.TrackingService.GetClickCount(ctx, shortID)
+	count, err := c.trackingService.GetClickCount(ctx, shortID)
 	if err != nil {
 		http.Error(w, "Failed to get click count: "+err.Error(), http.StatusInternalServerError)
 		return

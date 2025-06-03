@@ -13,7 +13,7 @@ func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httpr
 	ctx := context.Background()
 	shortID := p.ByName("short_id")
 
-	url, err := c.ShortenService.Resolve(ctx, shortID)
+	url, err := c.shortenService.Resolve(ctx, shortID)
 	if err != nil {
 		log.Printf("Error resolving short ID %s: %v", shortID, err)
 		http.NotFound(w, r)
@@ -27,7 +27,7 @@ func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httpr
 			ip = strings.Split(forwarded, ",")[0]
 		}
 		ua := r.UserAgent()
-		c.TrackingService.TrackClick(ctx, shortID, ip, ua)
+		c.trackingService.TrackClick(ctx, shortID, ip, ua)
 	}(ctx, r, shortID)
 
 	http.Redirect(w, r, url, http.StatusFound)
