@@ -28,10 +28,13 @@ func main() {
 	}
 
 	// middleware and routes setup
+	controller.RateLimiter.SetLimit(10, 60)
 	authMiddleware, err := di.InitializeAuthMiddleware(firebaseApp)
 	if err != nil {
 		log.Fatalf("failed to initialize auth middleware: %v", err)
 	}
+
+	
 	controller.RegisterRoutes(*authMiddleware)
 
 

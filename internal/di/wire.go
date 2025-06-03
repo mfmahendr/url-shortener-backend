@@ -34,7 +34,8 @@ func InitializeController(ctx context.Context, app *firebase.App) (*controllers.
         config.NewRedisClient,
         tracking_service.New,
         url_service.New,
-       controllers.New,
+        middleware.NewRateLimiter,
+        controllers.New,
     )
     return nil, nil
 }

@@ -14,12 +14,12 @@ type AuthMiddleware struct {
 	AuthClient *auth.Client
 }
 
-func NewAuthMiddleware(app *firebase.App) (*AuthMiddleware, error) {
+func NewAuthMiddleware(app *firebase.App) *AuthMiddleware {
 	authClient, err := app.Auth(context.Background())
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return &AuthMiddleware{AuthClient: authClient}, nil
+	return &AuthMiddleware{AuthClient: authClient}
 }
 
 func (m *AuthMiddleware) RequireAuth(next httprouter.Handle) httprouter.Handle {
