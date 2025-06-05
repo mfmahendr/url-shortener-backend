@@ -14,22 +14,24 @@ import (
 	"github.com/mfmahendr/url-shortener-backend/internal/controllers"
 	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
+	"github.com/mfmahendr/url-shortener-backend/internal/services/safebrowsing"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/tracking_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/url_service"
 )
 
 // Injectors from wire.go:
 
-func InitializeController(ctx context.Context, app *firebase.App) (*controllers.URLController, error) {
+func InitializeController(ctx context.Context, app *firebase.App, safeBrowsingKey string) (*controllers.URLController, error) {
 	firestoreServiceImpl, err := firestore_service.New(ctx, app)
 	if err != nil {
 		return nil, err
 	}
-	urlService := url_service.New(firestoreServiceImpl)
+	urlSafetyChecker := safebrowsing_service.New(ctx, safeBrowsingKey)
+	urlService := url_service.New(firestoreServiceImpl, firestoreServiceImpl, urlSafetyChecker)
 	client := config.NewRedisClient()
 	trackingService := tracking_service.New(firestoreServiceImpl, client)
 	slidingWindowLimiter := middleware.NewRateLimiter(client)
-	urlController := controllers.New(urlService, trackingService, slidingWindowLimiter)
+	urlController := controllers.New(urlService, trackingService, firestoreServiceImpl, slidingWindowLimiter)
 	return urlController, nil
 }
 
@@ -42,4 +44,4 @@ func InitializeAuthMiddleware(app *firebase.App) (*middleware.AuthMiddleware, er
 
 var firebaseAppSet = wire.NewSet(config.InitFirebase)
 
-var firestoreServiceSet = wire.NewSet(firestore_service.New, wire.Bind(new(firestore_service.FirestoreService), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.Shortlink), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.ClickLog), new(*firestore_service.FirestoreServiceImpl)))
+var firestoreServiceSet = wire.NewSet(firestore_service.New, wire.Bind(new(firestore_service.FirestoreService), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.Shortlink), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.ClickLog), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.BlacklistManager), new(*firestore_service.FirestoreServiceImpl)), wire.Bind(new(firestore_service.BlacklistChecker), new(*firestore_service.FirestoreServiceImpl)))

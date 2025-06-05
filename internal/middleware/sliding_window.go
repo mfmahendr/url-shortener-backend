@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -53,6 +54,7 @@ func (l *SlidingWindowLimiter) Apply(next httprouter.Handle) httprouter.Handle {
 		_, err := pipe.Exec(r.Context())
 
 		if err != nil {
+			log.Printf("Error rate limiter: "+err.Error())
 			http.Error(w, "Rate limiter error", http.StatusInternalServerError)
 			return
 		}

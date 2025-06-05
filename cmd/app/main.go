@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/mfmahendr/url-shortener-backend/config"
 	"github.com/mfmahendr/url-shortener-backend/internal/di"
@@ -22,13 +23,13 @@ func main() {
 	firebaseApp := config.InitFirebase(ctx)
 	
 	// initialize the controller and services using dependency injection
-	controller, err := di.InitializeController(ctx, firebaseApp)
+	controller, err := di.InitializeController(ctx, firebaseApp, os.Getenv("SAFE_BROWSING_API_KEY"))
 	if err != nil {
 		log.Fatalf("failed to initialize app: %v", err)
 	}
 
 	// middleware and routes setup
-	controller.RateLimiter.SetLimit(10, 60)
+	controller.RateLimiter.SetLimit(5, 30 * time.Second)		// 5 request per 30 seconds
 	authMiddleware, err := di.InitializeAuthMiddleware(firebaseApp)
 	if err != nil {
 		log.Fatalf("failed to initialize auth middleware: %v", err)
