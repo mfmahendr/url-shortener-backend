@@ -44,3 +44,30 @@ func (m *AuthMiddleware) RequireAuth(next httprouter.Handle) httprouter.Handle {
 		next(w, r, p)
 	}
 }
+
+func (m *AuthMiddleware) RequireAdminAuth(next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		idToken := strings.TrimPrefix(authHeader, "Bearer ")
+		ctx := r.Context()
+
+		token, err := m.AuthClient.VerifyIDToken(ctx, idToken)
+		if err != nil {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		if isAdmin, ok := token.Claims["admin"].(bool); !ok || !isAdmin {
+			http.Error(w, "Forbidden: admin access only", http.StatusForbidden)
+			return
+		}
+
+		ctx = context.WithValue(ctx, "user", token.UID)
+		next(w, r.WithContext(ctx), ps)
+	}
+}
