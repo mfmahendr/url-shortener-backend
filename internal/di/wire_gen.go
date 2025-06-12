@@ -26,9 +26,9 @@ func InitializeController(ctx context.Context, app *firebase.App, safeBrowsingKe
 	if err != nil {
 		return nil, err
 	}
-	urlSafetyChecker := safebrowsing_service.New(ctx, safeBrowsingKey)
-	urlService := url_service.New(firestoreServiceImpl, firestoreServiceImpl, urlSafetyChecker)
 	client := config.NewRedisClient()
+	urlSafetyChecker := safebrowsing_service.New(ctx, safeBrowsingKey, client)
+	urlService := url_service.New(firestoreServiceImpl, firestoreServiceImpl, urlSafetyChecker)
 	trackingService := tracking_service.New(firestoreServiceImpl, client)
 	slidingWindowLimiter := middleware.NewRateLimiter(client)
 	urlController := controllers.New(urlService, trackingService, firestoreServiceImpl, slidingWindowLimiter)
