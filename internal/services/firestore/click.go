@@ -15,6 +15,7 @@ import (
 type ClickLog interface {
 	AddClickLog(ctx context.Context, doc interface{}) error
 	GetClickLogs(ctx context.Context, query dto.ClickLogsQuery) ([]models.ClickLog, string, error)
+	StreamClickLogs(ctx context.Context, shortID string) (*firestore.DocumentIterator, error)
 	GetAnalytics(ctx context.Context, shortID string) (int64, []models.ClickLog, error)
 }
 
@@ -56,6 +57,18 @@ func (s *FirestoreServiceImpl) GetClickLogs(ctx context.Context, query dto.Click
 	return logs, nextCursor, nil
 }
 
+func (s *FirestoreServiceImpl) StreamClickLogs(ctx context.Context, shortID string) (*firestore.DocumentIterator, error) {
+	q := s.client.Collection("click_logs").
+		Where("short_id", "==", shortID).
+		OrderBy("timestamp", firestore.Asc)
+
+	shouldReturn, err := checkDocumentExists(ctx, q)
+	if shouldReturn {
+		return nil, err
+	}
+
+	return q.Documents(ctx), nil
+}
 
 func (s *FirestoreServiceImpl) GetAnalytics(ctx context.Context, shortID string) (int64, []models.ClickLog, error) {
 	iter := s.client.Collection("click_logs").

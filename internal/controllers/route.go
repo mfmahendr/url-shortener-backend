@@ -7,11 +7,12 @@ import (
 func (c *URLController) RegisterRoutes(auth mw.AuthMiddleware) {
 	c.Router.GET("/health", c.RateLimiter.Apply(c.HealthCheck))
 	c.Router.GET("/", c.RateLimiter.Apply(c.Home))
-	
+
 	c.Router.GET("/r/:short_id", c.RateLimiter.Apply(c.Redirect))
 	
 	c.Router.POST("/u/shorten", c.RateLimiter.Apply(auth.RequireAuth(c.Shorten)))
 	c.Router.GET("/u/click-count/:short_id", c.RateLimiter.Apply(auth.RequireAuth(c.GetClickCount)))
+	c.Router.GET("/u/click-count/:short_id/export", c.RateLimiter.Apply(auth.RequireAuth(c.ExportAllClickCount)))
 	c.Router.GET("/u/analytics/:short_id", c.RateLimiter.Apply(auth.RequireAuth(c.Analytics)))
 
 	// admin
