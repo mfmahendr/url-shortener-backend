@@ -48,6 +48,8 @@ func parseClickLogsQuery(r *http.Request, query *dto.ClickLogsQuery) {
 		if parsed, err := strconv.Atoi(l); err == nil {
 			query.Limit = parsed
 		}
+	} else {
+		query.Limit = 50
 	}
 
 	query.Cursor = r.URL.Query().Get("cursor")
