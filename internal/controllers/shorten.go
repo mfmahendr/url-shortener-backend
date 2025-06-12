@@ -7,11 +7,12 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 )
 
 func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := r.Context()
-	_, ok := ctx.Value("user").(string)
+	_, ok := ctx.Value(utils.UserKey).(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

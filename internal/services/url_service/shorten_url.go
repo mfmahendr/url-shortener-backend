@@ -97,7 +97,7 @@ func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRe
 
 // Simpan shortlink (reusable function)
 func (s *URLServiceImpl) saveShortlink(ctx context.Context, shortID, url string) (string, error) {
-	user, ok := ctx.Value("user").(string)
+	user, ok := ctx.Value(utils.UserKey).(string)
 	if !ok {
 		return "", shortlink_errors.ErrValidateRequest
 	}

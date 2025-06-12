@@ -6,6 +6,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 )
 
 func (c *URLController) Analytics(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -13,7 +14,7 @@ func (c *URLController) Analytics(w http.ResponseWriter, r *http.Request, ps htt
 	ctx := r.Context()
 	shortID := ps.ByName("short_id")
 
-	user, ok := ctx.Value("user").(string)
+	user, ok := ctx.Value(utils.UserKey).(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
