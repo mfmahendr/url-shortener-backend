@@ -74,7 +74,7 @@ func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRe
 		isUnsafe, err := s.safebrowsing.IsUnsafe(ctx, req.URL)
 		if err != nil {
 			log.Printf("SafeBrowsing error: %v", err)
-			return nil
+			return shortlink_errors.ErrFailedRetrieveData
 		}
 		if isUnsafe {
 			log.Println("This site is unsafe")
