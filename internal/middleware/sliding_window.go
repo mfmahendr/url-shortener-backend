@@ -3,9 +3,11 @@ package middleware
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
+	nanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/julienschmidt/httprouter"
 	"github.com/redis/go-redis/v9"
 )
@@ -50,10 +52,15 @@ func (l *SlidingWindowLimiter) Apply(next httprouter.Handle) httprouter.Handle {
 		key := "rate:" + ip + ":" + r.URL.Path
 
 		now := time.Now().Unix()
+		uniqueID, err := nanoid.Generate("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 6)
+		if err != nil {
+			log.Println("Error generating ID:", err)
+		}
+		uniqueMember := fmt.Sprintf("%d.%s", now, uniqueID)
 		windowStart := now - int64(l.window.Seconds())
 
 		pipe := l.client.Pipeline()
-		pipe.ZAdd(r.Context(), key, redis.Z{Score: float64(now), Member: now})
+		pipe.ZAdd(r.Context(), key, redis.Z{Score: float64(now), Member: uniqueMember})
 		pipe.ZRemRangeByScore(r.Context(), key, "0", fmt.Sprintf("%d", windowStart))
 		countCmd := pipe.ZCard(r.Context(), key)
 		pipe.Expire(r.Context(), key, l.window)
