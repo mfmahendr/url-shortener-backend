@@ -63,7 +63,7 @@ func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRe
 			return shortlink_errors.ErrFailedRetrieveData
 		}
 		if isBlacklisted {
-			log.Println("This keyword is reserved")
+			log.Println("This domain is blacklisted")
 			return shortlink_errors.ErrBlacklistedID
 		}
 		return nil
