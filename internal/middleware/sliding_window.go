@@ -40,7 +40,13 @@ func (l *SlidingWindowLimiter) SetLimit(limit int, window time.Duration) {
 
 func (l *SlidingWindowLimiter) Apply(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		ip := r.RemoteAddr
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			log.Printf("Unable to parse RemoteAddr: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		ip := host
 		key := "rate:" + ip + ":" + r.URL.Path
 
 		now := time.Now().Unix()
@@ -51,7 +57,7 @@ func (l *SlidingWindowLimiter) Apply(next httprouter.Handle) httprouter.Handle {
 		pipe.ZRemRangeByScore(r.Context(), key, "0", fmt.Sprintf("%d", windowStart))
 		countCmd := pipe.ZCard(r.Context(), key)
 		pipe.Expire(r.Context(), key, l.window)
-		_, err := pipe.Exec(r.Context())
+		_, err = pipe.Exec(r.Context())
 
 		if err != nil {
 			log.Printf("Error rate limiter: "+err.Error())
