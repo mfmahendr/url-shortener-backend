@@ -15,6 +15,8 @@ func mapErrorToStatusCode(err error) (statusCode int) {
 	switch {
 	case errors.Is(err, shortlink_errors.ErrBlacklistedID):
 		statusCode = http.StatusForbidden
+	case errors.Is(err, shortlink_errors.ErrForbidden):
+		statusCode = http.StatusForbidden
 	case errors.Is(err, shortlink_errors.ErrIDExists):
 		statusCode = http.StatusConflict
 	case errors.Is(err, shortlink_errors.ErrGenerateID), errors.Is(err, shortlink_errors.ErrSaveShortlink), errors.Is(err, shortlink_errors.ErrFailedRetrieveData):
