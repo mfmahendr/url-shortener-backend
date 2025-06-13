@@ -7,4 +7,5 @@ type Shortlink struct {
 	URL       string    `firestore:"url"`
 	CreatedAt time.Time `firestore:"created_at"`
 	CreatedBy string    `firestore:"created_by"`
+	IsPrivate   bool      `firestore:"is_private"`
 }

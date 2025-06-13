@@ -19,25 +19,26 @@ import (
 )
 
 func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (string, error) {
-	if err := val.Validate.Struct(req); err != nil {
+	err := val.Validate.Struct(req);
+	if err != nil {
 		return "", shortlink_errors.ErrValidateRequest
 	}
 
 	// if CustomID is not provided, generate a new ID
 	if req.CustomID == "" {
-		id, err := nanoid.New()
+		req.CustomID, err = nanoid.New()
 		if err != nil {
 			log.Println("Error generating ID:", err)
 			return "", shortlink_errors.ErrGenerateID
 		}
-		return s.saveShortlink(ctx, id, req.URL)
+		return s.saveShortlink(ctx, req)
 	}
 
 	if err := s.validateCustomID(ctx, req); err != nil {
 		return "", err
 	}
 
-	return s.saveShortlink(ctx, req.CustomID, req.URL)
+	return s.saveShortlink(ctx, req)
 }
 
 func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRequest) error {
@@ -96,21 +97,22 @@ func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRe
 }
 
 // Simpan shortlink (reusable function)
-func (s *URLServiceImpl) saveShortlink(ctx context.Context, shortID, url string) (string, error) {
+func (s *URLServiceImpl) saveShortlink(ctx context.Context, req dto.ShortenRequest) (string, error) {
 	user, ok := ctx.Value(utils.UserKey).(string)
 	if !ok {
 		return "", shortlink_errors.ErrValidateRequest
 	}
 
 	doc := models.Shortlink{
-		ShortID:   shortID,
-		URL:       url,
+		ShortID:   req.CustomID,
+		URL:       req.URL,
 		CreatedAt: time.Now(),
 		CreatedBy: user,
+		IsPrivate: req.IsPrivate,
 	}
 
-	if err := s.shortlink.SetShortlink(ctx, shortID, doc); err != nil {
+	if err := s.shortlink.SetShortlink(ctx, doc.ShortID, doc); err != nil {
 		return "", shortlink_errors.ErrSaveShortlink
 	}
-	return shortID, nil
+	return doc.ShortID, nil
 }
