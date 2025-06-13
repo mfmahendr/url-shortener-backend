@@ -8,6 +8,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	auth "firebase.google.com/go/v4/auth"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils"
 )
 
 type AuthMiddleware struct {
@@ -39,7 +40,7 @@ func (m *AuthMiddleware) RequireAuth(next httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", token.UID)
+		ctx := context.WithValue(r.Context(), utils.UserKey, token.UID)
 		r = r.WithContext(ctx)
 		next(w, r, p)
 	}
@@ -67,7 +68,7 @@ func (m *AuthMiddleware) RequireAdminAuth(next httprouter.Handle) httprouter.Han
 			return
 		}
 
-		ctx = context.WithValue(ctx, "user", token.UID)
+		ctx = context.WithValue(ctx, utils.UserKey, token.UID)
 		next(w, r.WithContext(ctx), ps)
 	}
 }
