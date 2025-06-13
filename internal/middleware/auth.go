@@ -46,6 +46,26 @@ func (m *AuthMiddleware) RequireAuth(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
+func (m *AuthMiddleware) OptionalAuth(next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// get the Authorization header
+		header := r.Header.Get("Authorization")
+		if header != "" || strings.HasPrefix(header, "Bearer ") {
+			// extract the token from the header
+			idToken := strings.TrimPrefix(header, "Bearer ")
+			token, err := m.AuthClient.VerifyIDToken(r.Context(), idToken)
+			if err != nil {
+				http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), utils.UserKey, token.UID)
+			r = r.WithContext(ctx)
+		}
+		next(w, r, p)
+	}
+}
+
 func (m *AuthMiddleware) RequireAdminAuth(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		authHeader := r.Header.Get("Authorization")
