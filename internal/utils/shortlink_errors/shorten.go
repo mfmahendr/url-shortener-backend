@@ -10,4 +10,5 @@ var (
 	ErrValidateRequest    = errors.New("invalid request data")
 	ErrFailedRetrieveData = errors.New("failed to retrieve data from database")
 	ErrNotFound           = errors.New("no data found")
+	ErrForbidden          = errors.New("forbidden access")
 )
