@@ -16,7 +16,7 @@ func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httpr
 	url, err := c.shortenService.Resolve(ctx, shortID)
 	if err != nil {
 		log.Printf("Error resolving short ID %s: %v", shortID, err)
-		http.NotFound(w, r)
+		http.Error(w, err.Error(), mapErrorToStatusCode(err))
 		return
 	}
 
