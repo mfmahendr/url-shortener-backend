@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -22,7 +23,12 @@ func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httpr
 
 	// Tracking click
 	go func(ctx context.Context, r *http.Request, shortID string) {
-		ip := r.RemoteAddr
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			log.Printf("Unable to parse RemoteAddr: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
 			ip = strings.Split(forwarded, ",")[0]
 		}

@@ -48,8 +48,7 @@ func (l *SlidingWindowLimiter) Apply(next httprouter.Handle) httprouter.Handle {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		ip := host
-		key := "rate:" + ip + ":" + r.URL.Path
+		key := "rate:" + host + ":" + r.URL.Path
 
 		now := time.Now().Unix()
 		uniqueID, err := nanoid.Generate("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 6)
