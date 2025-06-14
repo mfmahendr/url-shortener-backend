@@ -13,13 +13,13 @@ import (
 )
 
 type ClickLog interface {
-	AddClickLog(ctx context.Context, doc interface{}) error
+	AddClickLog(ctx context.Context, doc *models.ClickLog) error
 	GetClickLogs(ctx context.Context, query dto.ClickLogsQuery) ([]models.ClickLog, string, error)
 	StreamClickLogs(ctx context.Context, shortID string) (*firestore.DocumentIterator, error)
 	GetAnalytics(ctx context.Context, shortID string) (int64, []models.ClickLog, error)
 }
 
-func (s *FirestoreServiceImpl) AddClickLog(ctx context.Context, doc interface{}) error {
+func (s *FirestoreServiceImpl) AddClickLog(ctx context.Context, doc *models.ClickLog) error {
 	_, _, err := s.client.Collection("click_logs").Add(ctx, doc)
 	if err != nil {
 		return fmt.Errorf("failed to add click_logs: %w", err)
