@@ -74,7 +74,7 @@ func (c *URLController) ExportAllClickCount(w http.ResponseWriter, r *http.Reque
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"analytics_%s.json\"", shortID))
 	default:
-		http.Error(w, "Unsupported format; use ?format=csv or ?format=json", http.StatusBadRequest)
+		http.Error(w, "Unsupported format; use ?format=csv or ?format=json", http.StatusUnprocessableEntity)
 		return
 	}
 
