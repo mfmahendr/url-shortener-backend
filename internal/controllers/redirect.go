@@ -11,7 +11,7 @@ import (
 )
 
 func (c *URLController) Redirect(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	ctx := context.Background()
+	ctx := r.Context()
 	shortID := p.ByName("short_id")
 
 	url, err := c.shortenService.Resolve(ctx, shortID)
