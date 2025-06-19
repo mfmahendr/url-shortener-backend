@@ -8,6 +8,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils"
+	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
 )
 
 func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -21,7 +22,7 @@ func (c *URLController) Shorten(w http.ResponseWriter, r *http.Request, _ httpro
 	var req dto.ShortenRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil || req.URL == "" {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Failed to shorten URL:" + shortlink_errors.ErrValidateRequest.Error(), http.StatusBadRequest)
 		return
 	}
 
