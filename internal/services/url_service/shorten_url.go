@@ -19,7 +19,7 @@ import (
 )
 
 func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (string, error) {
-	err := val.Validate.Struct(req);
+	err := val.Validate.Struct(req)
 	if err != nil {
 		return "", shortlink_errors.ErrValidateRequest
 	}
@@ -31,23 +31,37 @@ func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (s
 			log.Println("Error generating ID:", err)
 			return "", shortlink_errors.ErrGenerateID
 		}
-		return s.saveShortlink(ctx, req)
+	} else if err := s.validateCustomID(ctx, req.CustomID); err != nil {
+		return "", err
 	}
 
-	if err := s.validateCustomID(ctx, req); err != nil {
+	if err := s.validateURL(ctx, req.URL); err != nil {
 		return "", err
 	}
 
 	return s.saveShortlink(ctx, req)
 }
 
-func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRequest) error {
-	if utils.BlacklistedCustomIDs[req.CustomID] { // check reserved keywords
+func (s *URLServiceImpl) validateCustomID(ctx context.Context, customID string) error {
+	if utils.BlacklistedCustomIDs[customID] { // check reserved keywords
 		return shortlink_errors.ErrBlacklistedID
 	}
 
+	// check if custom ID is already exist
+	_, err := s.shortlink.GetShortlink(ctx, customID)
+	if err == nil {
+		return shortlink_errors.ErrIDExists
+	}
+	if !errors.Is(err, shortlink_errors.ErrNotFound) {
+		return shortlink_errors.ErrFailedRetrieveData
+	}
+
+	return nil
+}
+
+func (s *URLServiceImpl) validateURL(ctx context.Context, targetURL string) error {
 	// check if the URL is valid
-	parsedURL, err := url.Parse(req.URL)
+	parsedURL, err := url.Parse(targetURL)
 	if err != nil || parsedURL.Host == "" {
 		log.Println("Invalid request: URL has no host")
 		return shortlink_errors.ErrValidateRequest
@@ -72,23 +86,14 @@ func (s *URLServiceImpl) validateCustomID(ctx context.Context, req dto.ShortenRe
 
 	// check safe Browsing
 	eg.Go(func() error {
-		isUnsafe, err := s.safebrowsing.IsUnsafe(ctx, req.URL)
+		isUnsafe, err := s.safebrowsing.IsUnsafe(ctx, targetURL)
 		if err != nil {
 			log.Printf("SafeBrowsing error: %v", err)
 			return shortlink_errors.ErrFailedRetrieveData
 		}
 		if isUnsafe {
 			log.Println("This site is unsafe")
-			return shortlink_errors.ErrValidateRequest
-		}
-		return nil
-	})
-
-	// check custom ID existence
-	eg.Go(func() error {
-		_, err := s.shortlink.GetShortlink(ctx, req.CustomID)
-		if err != nil && !errors.Is(err, shortlink_errors.ErrNotFound) {
-			return shortlink_errors.ErrIDExists
+			return shortlink_errors.ErrForbidden
 		}
 		return nil
 	})
