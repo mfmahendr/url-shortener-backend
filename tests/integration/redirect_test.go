@@ -15,7 +15,6 @@ import (
 	"github.com/mfmahendr/url-shortener-backend/internal/services/tracking_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/url_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
-	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,10 +22,6 @@ import (
 func TestRedirect(t *testing.T) {
 	ctx := context.Background()
 	tcEnv = GetSharedTestContainerEnv(ctx, t)
-	if tcEnv == nil {
-		t.Fatal("tcEnv is nil! initialization likely failed")
-	}
-	validators.Init()
 
 	// Service dependencies
 	urlSvc := url_service.New(fsService, fsService, nil)

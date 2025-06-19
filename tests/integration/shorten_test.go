@@ -16,7 +16,6 @@ import (
 	"github.com/mfmahendr/url-shortener-backend/internal/services/tracking_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/url_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
-	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,10 +23,6 @@ import (
 func TestShorten(t *testing.T) {
 	ctx := context.Background()
 	tcEnv = GetSharedTestContainerEnv(ctx, t)
-	if tcEnv == nil {
-		t.Fatal("tcEnv is nil! initialization likely failed")
-	}
-	validators.Init()
 
 	// Init services
 	mockSB := &safebrowsing_service.MockSafeBrowsingService{
