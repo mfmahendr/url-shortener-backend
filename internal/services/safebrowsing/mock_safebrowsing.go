@@ -2,7 +2,6 @@ package safebrowsing_service
 
 import (
 	"context"
-	"log"
 )
 
 type MockSafeBrowsingService struct {
@@ -14,6 +13,5 @@ func (m *MockSafeBrowsingService) IsUnsafe(ctx context.Context, targetURL string
 	if m.Err != nil {
 		return false, m.Err
 	}
-	log.Println("[MockSafeBrowsingService] IsUnsafe ("+targetURL+")?", m.UnsafeURLs[targetURL])
 	return m.UnsafeURLs[targetURL], nil
 }
