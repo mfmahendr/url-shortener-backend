@@ -22,7 +22,7 @@ func StartFirebaseEmulator(ctx context.Context) (tc.Container, string, string, e
 				"9099/tcp": {{HostPort: "9099"}},
 			}
 		},
-		WaitingFor: wait.ForLog("All emulators ready!").WithStartupTimeout(2 * time.Minute),
+		WaitingFor: wait.ForLog("All emulators ready").WithStartupTimeout(3 * time.Minute).WithOccurrence(1).AsRegexp(),
 	}
 	container, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: req,
