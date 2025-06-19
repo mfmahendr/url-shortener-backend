@@ -6,14 +6,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/mfmahendr/url-shortener-backend/internal/controllers"
 	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
 	"github.com/mfmahendr/url-shortener-backend/internal/models"
-	firestore_service "github.com/mfmahendr/url-shortener-backend/internal/services/firestore"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/tracking_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/services/url_service"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
@@ -22,29 +20,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	validators.Init()
-	os.Exit(m.Run())
-}
-
 func TestRedirect(t *testing.T) {
-	env := InitializeTestContainerEnvironment(t)
 	ctx := context.Background()
+	tcEnv = GetSharedTestContainerEnv(ctx, t)
+	if tcEnv == nil {
+		t.Fatal("tcEnv is nil! initialization likely failed")
+	}
+	validators.Init()
 
 	// Service dependencies
-	fsSvc, err := firestore_service.New(ctx, env.FsApp)
-	require.NoError(t, err)
-	urlSvc := url_service.New(fsSvc, fsSvc, nil)
-	trackingSvc := tracking_service.New(fsSvc, env.RdClient)
+	urlSvc := url_service.New(fsService, fsService, nil)
+	trackingSvc := tracking_service.New(fsService, tcEnv.rdClient)
 
 	// Middlewares
-	authMiddleware := middleware.NewAuthMiddleware(env.FsApp)
+	authMiddleware := middleware.NewAuthMiddleware(tcEnv.FsApp)
 
-	rateLimiter := middleware.NewRateLimiter(env.RdClient)
+	rateLimiter := middleware.NewRateLimiter(tcEnv.rdClient)
 	rateLimiter.SetLimit(5, 5*time.Second)
 
 	// Controllers
-	controller := controllers.New(urlSvc, trackingSvc, fsSvc, nil)
+	controller := controllers.New(urlSvc, trackingSvc, fsService, nil)
 	controller.Router.GET("/r/:short_id",
 		rateLimiter.Apply(
 			authMiddleware.OptionalAuth(controller.Redirect),
@@ -62,7 +57,7 @@ func TestRedirect(t *testing.T) {
 
 
 	// create shortlink to redirect
-	err = fsSvc.SetShortlink(ctx, existingPublicShortID, models.Shortlink{
+	err := fsService.SetShortlink(ctx, existingPublicShortID, models.Shortlink{
 		ShortID:   existingPublicShortID,
 		URL:       expectedURL,
 		IsPrivate: false,
@@ -70,7 +65,7 @@ func TestRedirect(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = fsSvc.SetShortlink(ctx, privateShortID, models.Shortlink{
+	err = fsService.SetShortlink(ctx, privateShortID, models.Shortlink{
 		ShortID:   privateShortID,
 		URL:       expectedURL,
 		IsPrivate: true,
