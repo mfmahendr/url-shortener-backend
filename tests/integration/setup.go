@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 
 	firebase "firebase.google.com/go/v4"
@@ -29,16 +28,15 @@ type TestContainerEnv struct {
 }
 
 var (
-	envOnce   sync.Once
 	tcEnv     *TestContainerEnv
 	fsService *firestore_service.FirestoreServiceImpl // firestore service (global because we don't want firebase App to create so many firestore client)
 	initErr   error
 )
 
 func GetSharedTestContainerEnv(ctx context.Context, t *testing.T) *TestContainerEnv {
-	envOnce.Do(func() {
+	if tcEnv == nil {
 		tcEnv, initErr = initializeTestContainerEnvironment(ctx)
-	})
+	}
 	if t != nil && initErr != nil {
 		t.Fatalf("failed to initialize test container env:\n%v", initErr)
 	}
