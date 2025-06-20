@@ -29,7 +29,15 @@ func (s *FirestoreServiceImpl) BlacklistDomain(ctx context.Context, domain strin
 		return shortlink_errors.ErrValidateRequest
 	}
 
-	_, err := s.client.Collection("blacklist_domains").Doc(domain).Set(ctx, map[string]interface{}{
+	ok, err := s.isDomainBlacklisted(ctx, domain)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return shortlink_errors.ErrResourceExists
+	}
+
+	_, err = s.client.Collection("blacklist_domains").Doc(domain).Set(ctx, map[string]interface{}{
 		"created_at": time.Now(),
 		"source":     "manual",
 	})
@@ -42,7 +50,15 @@ func (s *FirestoreServiceImpl) UnblacklistDomain(ctx context.Context, domain str
 		return shortlink_errors.ErrValidateRequest
 	}
 
-	_, err := s.client.Collection("blacklist_domains").Doc(domain).Delete(ctx)
+	ok, err := s.isDomainBlacklisted(ctx, domain)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return shortlink_errors.ErrNotFound
+	}
+
+	_, err = s.client.Collection("blacklist_domains").Doc(domain).Delete(ctx)
 	return err
 }
 
@@ -67,6 +83,10 @@ func (s *FirestoreServiceImpl) IsDomainBlacklisted(ctx context.Context, domain s
 		return false, shortlink_errors.ErrValidateRequest
 	}
 
+	return s.isDomainBlacklisted(ctx, domain)
+}
+
+func (s *FirestoreServiceImpl) isDomainBlacklisted(ctx context.Context, domain string) (bool, error) {
 	doc, err := s.client.Collection("blacklist_domains").Doc(domain).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
