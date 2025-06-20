@@ -44,10 +44,11 @@ func TestShorten(t *testing.T) {
 	)
 
 	// Create test user and token
-	userID, token := createTestUserAndToken(t, "shortenuser@example.com")
+	userID, token, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "shortenuser@example.com", nil)
+	require.NoError(t, err)
 
 	// add blacklisted domain data
-	err := fsService.BlacklistDomain(ctx, "this-is-a-blacklisted-domain.com")
+	err = fsService.BlacklistDomain(ctx, "this-is-a-blacklisted-domain.com")
 	require.NoError(t, err)
 
 	customID := "customtest123"

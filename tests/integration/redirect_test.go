@@ -1,9 +1,7 @@
 package integration
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,12 +43,13 @@ func TestRedirect(t *testing.T) {
 	expectedURL := "https://google.com"		// both short id will redirect to this URL
 
 	// creating auth user
-	privateOwnerUID, shortIDOwnerToken := createTestUserAndToken(t, "owner@email.com")
-	_, anotherToken := createTestUserAndToken(t, "anotheruser@email.com")
-
+	privateOwnerUID, shortIDOwnerToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "owner@email.com", nil)
+	require.NoError(t, err)
+	_, anotherToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "anotheruser@email.com", nil)
+	require.NoError(t, err)
 
 	// create shortlink to redirect
-	err := fsService.SetShortlink(ctx, existingPublicShortID, models.Shortlink{
+	err = fsService.SetShortlink(ctx, existingPublicShortID, models.Shortlink{
 		ShortID:   existingPublicShortID,
 		URL:       expectedURL,
 		IsPrivate: false,
@@ -131,29 +130,4 @@ func TestRedirect(t *testing.T) {
 		assert.Equal(t, http.StatusFound, rec.Code)
 		assert.Equal(t, expectedURL, rec.Header().Get("Location"))
 	})
-}
-
-func createTestUserAndToken(t *testing.T, email string) (string, string) {
-	body := map[string]interface{}{
-		"email":             email,
-		"password":          "password123",
-		"returnSecureToken": true,
-	}
-	bodyBytes, _ := json.Marshal(body)
-
-	resp, err := http.Post(
-		"http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key",
-		"application/json",
-		bytes.NewBuffer(bodyBytes),
-	)
-	require.NoError(t, err)
-	defer resp.Body.Close()
-
-	var res struct {
-		LocalID string `json:"localId"`		// UID
-		IDToken string `json:"idToken"`		// Token
-	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&res))
-
-	return res.LocalID, res.IDToken
 }

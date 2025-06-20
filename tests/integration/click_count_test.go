@@ -39,11 +39,12 @@ func TestGetClickCount(t *testing.T) {
 	)
 
 	// Create test user & shortlink
-	uid, token := createTestUserAndToken(t, "clickuser@example.com")
+	uid, token, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "clickuser@example.com", nil)
+	require.NoError(t, err)
 	shortID := "clickcount123"
 
-	// Simulate shortlink creation
-	err := fsService.SetShortlink(ctx, shortID, models.Shortlink{
+	// shortlink creation
+	err = fsService.SetShortlink(ctx, shortID, models.Shortlink{
 		ShortID:   shortID,
 		URL:       "https://clickcount.com",
 		CreatedBy: uid,
@@ -83,7 +84,8 @@ func TestGetClickCount(t *testing.T) {
 	})
 
 	t.Run("forbidden access by non-owner", func(t *testing.T) {
-		_, otherToken := createTestUserAndToken(t, "anotheruser@example.com")
+		_, otherToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "anotheruser@example.com", nil)
+		require.NoError(t, err)
 		req := httptest.NewRequest(http.MethodGet, "/u/click-count/"+shortID, nil)
 		req.Header.Set("Authorization", "Bearer "+otherToken)
 		rec := httptest.NewRecorder()
@@ -135,11 +137,13 @@ func TestExportAllClickCount(t *testing.T) {
 	)
 
 	// create test user and shortlink
-	ownerUID, ownerToken := createTestUserAndToken(t, "ownerexport@example.com")
-	_, otherToken := createTestUserAndToken(t, "otherexport@example.com")
+	ownerUID, ownerToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "ownerexport@example.com", nil)
+	require.NoError(t, err)
+	_, otherToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "otherexport@example.com", nil)
+	require.NoError(t, err)
 
 	shortID := "exporttest123"
-	err := fsService.SetShortlink(ctx, shortID, models.Shortlink{
+	err = fsService.SetShortlink(ctx, shortID, models.Shortlink{
 		ShortID:   shortID,
 		URL:       "https://export.com",
 		CreatedBy: ownerUID,

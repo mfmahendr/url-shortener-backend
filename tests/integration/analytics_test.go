@@ -37,11 +37,13 @@ func TestAnalytics(t *testing.T) {
 	)
 
 	// Buat data user dan shortlink
-	ownerUID, ownerToken := createTestUserAndToken(t, "analytics-owner@example.com")
-	_, anotherToken := createTestUserAndToken(t, "not-owner@example.com")
+	ownerUID, ownerToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "analytics-owner@example.com", nil)
+	require.NoError(t, err)
+	_, anotherToken, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "not-owner@example.com", nil)
+	require.NoError(t, err)
 
 	shortID := "analyticsTest123"
-	err := fsService.SetShortlink(ctx, shortID, models.Shortlink{
+	err = fsService.SetShortlink(ctx, shortID, models.Shortlink{
 		ShortID:   shortID,
 		URL:       "https://example.com/analytics",
 		CreatedBy: ownerUID,
