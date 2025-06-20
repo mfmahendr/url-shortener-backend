@@ -23,17 +23,15 @@ func TestRedirect(t *testing.T) {
 	ctx := context.Background()
 	tcEnv = GetSharedTestContainerEnv(ctx, t)
 
-	// Service dependencies
-	urlSvc := url_service.New(fsService, fsService, nil)
-	trackingSvc := tracking_service.New(fsService, tcEnv.rdClient)
-
-	// Middlewares
+	// middleware
 	authMiddleware := middleware.NewAuthMiddleware(tcEnv.FsApp)
 
 	rateLimiter := middleware.NewRateLimiter(tcEnv.rdClient)
 	rateLimiter.SetLimit(5, 5*time.Second)
 
-	// Controllers
+	// service and controllers
+	urlSvc := url_service.New(fsService, fsService, nil)
+	trackingSvc := tracking_service.New(fsService, tcEnv.rdClient)
 	controller := controllers.New(urlSvc, trackingSvc, fsService, nil)
 	controller.Router.GET("/r/:short_id",
 		rateLimiter.Apply(

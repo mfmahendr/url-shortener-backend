@@ -21,16 +21,16 @@ import (
 func TestAnalytics(t *testing.T) {
 	ctx := context.Background()
 	tcEnv = GetSharedTestContainerEnv(ctx, t)
-
-	// Init services
-	urlSvc := url_service.New(fsService, fsService, nil)
-	trackingSvc := tracking_service.New(fsService, tcEnv.rdClient)
+	require.NotNil(t, tcEnv, "tcEnv should be initialized")
 
 	// Middleware & controller
 	authMiddleware := middleware.NewAuthMiddleware(tcEnv.FsApp)
 	rateLimiter := middleware.NewRateLimiter(tcEnv.rdClient)
 	rateLimiter.SetLimit(5, 5*time.Second)
 
+	// services and controller
+	urlSvc := url_service.New(fsService, fsService, nil)
+	trackingSvc := tracking_service.New(fsService, tcEnv.rdClient)
 	controller := controllers.New(urlSvc, trackingSvc, fsService, rateLimiter)
 	controller.Router.GET("/u/analytics/:short_id",
 		rateLimiter.Apply(authMiddleware.RequireAuth(controller.Analytics)),
