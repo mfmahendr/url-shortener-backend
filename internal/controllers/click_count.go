@@ -28,7 +28,8 @@ func (c *URLController) GetClickCount(w http.ResponseWriter, r *http.Request, ps
 
 	count, err := c.trackingService.GetClickCount(ctx, shortID)
 	if err != nil {
-		http.Error(w, "Failed to get click count: "+err.Error(), http.StatusInternalServerError)
+		statusCode := mapErrorToStatusCode(err)
+		http.Error(w, "Failed to get click count: "+err.Error(), statusCode)
 		return
 	}
 
