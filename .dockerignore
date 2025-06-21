@@ -1,0 +1,16 @@
+.git
+.gitignore
+
+.vscode/
+
+/tests
+/testcontainers
+coverage.*
+
+# *.env
+# .env
+.env.example
+
+LICENCE
+
+*.md
