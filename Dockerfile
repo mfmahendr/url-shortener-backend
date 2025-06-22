@@ -17,7 +17,6 @@ FROM alpine:3.22
 RUN adduser -D appuser
 WORKDIR /home/appuser
 COPY --from=builder --chown=appuser /app/server .
-COPY .env .env
 USER appuser
 
 EXPOSE 8080
