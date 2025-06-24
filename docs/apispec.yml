@@ -2,6 +2,18 @@ openapi: '3.0.3'
 info:
   title: URL Shortener API
   version: '1.0'
+  description: |
+    A simple service for shortening URLs, tracking clicks, and managing domain restrictions.
+
+    Features:
+    - Create short links for long URLs, with optional custom IDs
+    - Redirect to the original URL via short link
+    - Private shortlinks (only accessible by the creator)
+    - Track click analytics (IP address, user-agent, timestamp)
+    - Export click data in JSON or CSV format
+    - Domain blacklist support (admin only)
+    - Firebase JWT-based authentication for secure access
+    - Full OpenAPI 3.0 documentation
 servers:
   - url: http://localhost:8080/
 paths:
