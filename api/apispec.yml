@@ -3,7 +3,7 @@ info:
   title: URL Shortener API
   version: '1.0'
 servers:
-  - Shortlink Services: http://localhost:8080/
+  - url: http://localhost:8080/
 paths:
   /:
     get:
