@@ -1,0 +1,24 @@
+name: Deploy Swagger API Docs
+
+# This workflow triggers when files in /docs or this workflow file change
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    # checkout the source code so we can access the /docs folder
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Deploy the contents of /docs to the gh-pages branch
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs                        # contains index.html + apispec.yaml
