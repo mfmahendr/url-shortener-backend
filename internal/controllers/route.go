@@ -1,12 +1,15 @@
 package controllers
 
 import (
+	"net/http"
+
 	mw "github.com/mfmahendr/url-shortener-backend/internal/middleware"
 )
 
 func (c *URLController) RegisterRoutes(auth mw.AuthMiddleware) {
 	c.Router.GET("/health", c.RateLimiter.Apply(c.HealthCheck))
 	c.Router.GET("/", c.RateLimiter.Apply(c.Home))
+	c.Router.ServeFiles("/docs/*filepath", http.Dir("./docs"))
 
 	c.Router.GET("/r/:short_id", c.RateLimiter.Apply(auth.OptionalAuth(c.Redirect)))
 	
