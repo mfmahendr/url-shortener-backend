@@ -11,6 +11,6 @@ func (c *URLController) Home(w http.ResponseWriter, r *http.Request, _ httproute
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Welcome to the URL Shortener API",
+		"message": "Welcome to the URL Shortener API! The API documentation can be found at /docs.",
 	})
 }
