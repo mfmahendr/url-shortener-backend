@@ -15,7 +15,14 @@ info:
     - Firebase JWT-based authentication for secure access
     - Full OpenAPI 3.0 documentation
 servers:
-  - url: http://localhost:8080/
+  - url: https://api.example.com/
+    description: Example API (this is just read-only demo)
+
+  - url: http://localhost:{port}/
+    description: Local development server
+    variables:
+      port:
+        default: "8080"
 paths:
   /:
     get:
