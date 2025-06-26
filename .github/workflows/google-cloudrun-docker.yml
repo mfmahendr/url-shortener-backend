@@ -1,0 +1,110 @@
+name: 'CI/CD Pipeline'
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - "LICENSE"
+  workflow_dispatch:
+
+env:
+  REPO_NAME: 'url-shortener-backend'
+  SERVICE_NAME: 'url-shortener'
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go Modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+            
+      - name: Tidy Go Modules
+        run: go mod tidy
+
+      - name: Run Unit Tests
+        run: go test -short ./internal/...
+
+      - name: Run Integration Tests
+        run: go test ./tests/integration/...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: '${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}'
+
+      - name: Docker Auth to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.auth_token }}'
+          registry: '${{ vars.GCP_REGION }}-docker.pkg.dev'
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_URI="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}"
+          echo "Building and pushing image: $IMAGE_URI"
+          docker build -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: '${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: ${{ vars.GCP_GH_ACTION_SA }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: '${{ env.SERVICE_NAME }}'
+          region: '${{ vars.GCP_REGION }}'
+          image: '${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}'
+          env_vars: |
+            APP_ENV=production
+            FIREBASE_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
+            REDIS_ADDR=${{ secrets.ENV_REDIS_ADDR }}
+            REDIS_PASSWORD=${{ secrets.ENV_REDIS_PASS }}
+            SAFE_BROWSING_API_KEY=${{ secrets.SAFE_BROWSING_API_KEY }}
+
+      - name: Show Cloud Run URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
