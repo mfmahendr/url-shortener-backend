@@ -70,8 +70,10 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           IMAGE_URI="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}"
-          echo "Building and pushing image: $IMAGE_URI"
+          echo "SERVICE_NAME is: $SERVICE_NAME"
+          echo "IMAGE_URI is: $IMAGE_URI"
           docker build -t "${IMAGE_URI}" .
+          docker images
           docker push "${IMAGE_URI}"
 
   deploy:
