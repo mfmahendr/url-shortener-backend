@@ -1,15 +1,15 @@
 
 <div align="center">
     <h1>URL Shortener Backend</h1>
-    <!-- <div align="center">
+    <strong>A simple service for shortening URLs, tracking clicks, and managing domain restrictions.</strong>
+    </br>
+    </br>
+    <div align="center">
         <img src="https://img.shields.io/github/go-mod/go-version/mfmahendr/url-shortener-backend" />
         <img src="https://img.shields.io/github/license/mfmahendr/url-shortener-backend" />
-        <img src="https://img.shields.io/github/actions/workflow/status/mfmahendr/url-shortener-backend/ci.yml?branch=main" />
-        <img src="https://img.shields.io/codecov/c/github/mfmahendr/url-shortener-backend" />
+        <img src="https://img.shields.io/github/actions/workflow/status/mfmahendr/url-shortener-backend/google-cloudrun-docker.yml?branch=main" />
         <img src="https://img.shields.io/github/last-commit/mfmahendr/url-shortener-backend" />
-    </div> -->
-    </br>
-    <strong>A simple service for shortening URLs, tracking clicks, and managing domain restrictions.</strong>
+    </div>
     <div align="center">
         <a href="#features">Features</a> - 
         <a href="#tech-stack">Tech Stack</a> - 
