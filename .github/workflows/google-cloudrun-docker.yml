@@ -11,7 +11,7 @@ on:
 
 env:
   REPO_NAME: 'url-shortener-backend'
-  SERVICE_NAME: 'url-shortener'
+  SERVICE_NAME: 'app'
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
