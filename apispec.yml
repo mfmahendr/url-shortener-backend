@@ -3,7 +3,7 @@ info:
   title: URL Shortener API
   version: '1.0'
   description: |
-    A simple service for shortening URLs, tracking clicks, and managing domain restrictions.
+    This is an API allowing users to shorten a long URLs and redirect from a short link to the original URL. User can also track click count from the short URL created. An admin may manage some domain to be blacklisted. The API is secured using Firebase Authentication and supports both public and authenticated endpoints.
 
     Features:
     - Create short links for long URLs, with optional custom IDs
@@ -13,7 +13,6 @@ info:
     - Export click data in JSON or CSV format
     - Domain blacklist support (admin only)
     - Firebase JWT-based authentication for secure access
-    - Full OpenAPI 3.0 documentation
 servers:
   - url: https://api.example.com/
     description: Example API (this is just read-only demo)
