@@ -59,13 +59,20 @@ jobs:
         with:
           workload_identity_provider: '${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}'
+          token_format: access_token
 
       - name: Docker Auth to Artifact Registry
         uses: docker/login-action@v3
         with:
           username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.auth_token }}'
+          password: '${{ steps.auth.outputs.access_token  }}'
           registry: '${{ vars.GCP_REGION }}-docker.pkg.dev'
+
+      - name: Debug SA Identity
+        run: |
+          gcloud auth list
+          gcloud auth print-access-token
+          gcloud config get-value account
 
       - name: Build and Push Docker Image
         run: |
