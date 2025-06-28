@@ -11,10 +11,19 @@ import (
 
 func InitFirebase(ctx context.Context) *firebase.App {
 	log.Println("Initializing Firebase...")
-	opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	config := &firebase.Config{ProjectID: os.Getenv("FIREBASE_PROJECT_ID")}
 
-	app, err := firebase.NewApp(ctx, config, opt) 
+	var (
+		err error
+		app *firebase.App
+	)
+	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") != "" {
+		opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+		app, err = firebase.NewApp(ctx, config, opt) 
+	} else {
+		app, err = firebase.NewApp(ctx, config) 
+	}
+
 	if err != nil {
 		log.Fatalf("error initializing firebase app: %v", err)
 	}
