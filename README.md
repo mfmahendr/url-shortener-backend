@@ -4,11 +4,19 @@
     </br>
     </br>
     <div align="center">
-        <img src="https://img.shields.io/github/go-mod/go-version/mfmahendr/url-shortener-backend" />
-        <img src="https://img.shields.io/github/license/mfmahendr/url-shortener-backend" />
-        <img src="https://img.shields.io/github/actions/workflow/status/mfmahendr/url-shortener-backend/google-cloudrun-docker.yml?branch=main" />
-        <img src="https://img.shields.io/github/last-commit/mfmahendr/url-shortener-backend" />
+        <span>
+            <img src="https://img.shields.io/github/go-mod/go-version/mfmahendr/url-shortener-backend" alt="Go Version" />
+            <img src="https://img.shields.io/github/license/mfmahendr/url-shortener-backend" alt="License" />
+            <img src="https://img.shields.io/github/last-commit/mfmahendr/url-shortener-backend" alt="Last Commit" />
+            <img src="https://img.shields.io/github/actions/workflow/status/mfmahendr/url-shortener-backend/google-cloudrun-docker.yml?branch=main" alt="CI Status" />
+            <img src="https://img.shields.io/badge/API-live-blue" alt="Live API status" />
+        </span>
     </div>
+    <div align="center">
+        <a href="https://app-533905689825.asia-southeast2.run.app" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
+        <a href="https://mfmahendr.github.io/url-shortener-backend/" target="_blank"><strong>📝 View Full API Docs</strong></a>
+    </div>
+    </br>
     <div align="center">
         <a href="#features">Features</a> - 
         <a href="#tech-stack">Tech Stack</a> - 
@@ -19,10 +27,9 @@
     </div>
 </div>
 
-
 <br>
 
-This is an API allowing users to shorten a long URLs and redirect from a short link to the original URL. User can also track click count from the short URL created. An admin may manage some domain to be blacklisted. The API is secured using Firebase Authentication and supports both public and authenticated endpoints.
+This is an API allowing users to shorten long URLs and redirect from a short link to the original URL. Users can also track click analytics. Admins may manage blacklisted domains. The API is secured using Firebase Authentication and supports both public and authenticated endpoints.
 
 ## Features
 
