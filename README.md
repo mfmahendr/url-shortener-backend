@@ -1,4 +1,3 @@
-
 <div align="center">
     <h1>URL Shortener Backend</h1>
     <strong>A simple service for shortening URLs, tracking clicks, and managing domain restrictions.</strong>
@@ -15,6 +14,7 @@
         <a href="#tech-stack">Tech Stack</a> - 
         <a href="#getting-started">Getting Started</a> - 
         <a href="#usage">Usage</a> - 
+        <a href="#cicd-workflow">CI/CD</a> - 
         <a href="#license">License</a>
     </div>
 </div>
@@ -54,223 +54,137 @@ This is an API allowing users to shorten a long URLs and redirect from a short l
 
 ## Getting Started
 
-TODO
+### Prerequisites
+Make sure you have the following installed before running the projec
+
+- Go 1.23.1 or newer version
+- Firebase Project with service account key for local dev
+- Safe Browsing API Key (from Google API Console)
+- Redis (for local caching and rate limiting) or you may use a managed Redis service, such as Redis Cloud, Upstash, Google Cloud Memorystore, etc
+- Docker  (for integration testing and optionally for containerized run)
+- Google Cloud SDK (for manual deploy)
+
+### Installation / Setup
+1. Clone the repository
+
+```bash
+git clone https://github.com/mfmahendr/url-shortener-backend.git
+cd url-shortener-backend
+```
+2. Download dependencies
+
+```bash
+go mod download
+```
+
+3. Build the application (if you want to) 
+
+```bash
+go build -o app ./cmd/app
+```
+
+### Environment Variables
+Environment variables must be configured for both development and production. You can use a .env file for local setup. You can copy the `.env.example` file to `.env` and fill in the required values.
+
+In production, these values should be passed as environment variables via your deployment tool (e.g. GitHub Actions + Cloud Run).
+| Variable Name                  | Description                                                      |
+|-------------------------------|------------------------------------------------------------------|
+| `APP_ENV`                     | Application environment (must be `development` or `production`)       |
+| `PORT`                        | Port number for the HTTP server (default: `8080`)                |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to your Firebase service account key JSON file (**local development only**). In production, use default credentials. |
+| `FIREBASE_PROJECT_ID`         | Your Firebase project ID                                         |
+| `REDIS_ADDR`                  | Redis server address (e.g. `localhost:6379`)                     |
+| `REDIS_PASSWORD`              | Password for Redis instance                                      |
+| `SAFE_BROWSING_API_KEY`       | Google Safe Browsing API key                                     |
+
+### Run the Application
+Locally using Go:
+```bash
+go run ./cmd/app
+```
+
+Or using Docker:
+
+```bash
+docker build -t url-shortener-backend .
+docker run --env-file .env -e APP_ENV=development -p 8080:8080 url-shortener-backend
+```
+
+### Run Tests
+
+**Unit Tests**
+
+```bash
+go test ./internal/...
+```
+
+**Integration Tests**
+
+Requires Docker (used by testcontainers-go):
+
+```bash
+go test ./tests/integration/...
+```
+
+Integration test will automatically spin up containers for Firebase Emulator and Redis.
+
+
+
+
 
 ## Usage
 
-#### Get welcome message
+The API exposes public and authenticated endpoints for creating and managing short URLs, including analytics and blacklist administration.
 
-```http
-GET /
-```
+> Full API docs are available at:
+> **[https://mfmahendr.github.io/url-shortener-backend/](https://mfmahendr.github.io/url-shortener-backend/)**
+> *(Swagger UI served from GitHub Pages, powered by OpenAPI 3.0)*
 
-Returns a welcome message to verify the API is accessible.
+#### Public Endpoints
 
-| Response | Content                                             |
-| -------- | --------------------------------------------------- |
-| `200`    | `{ "message": "Welcome to the URL Shortener API" }` |
-| `500`    | Internal server error                               |
+* `GET /` → Welcome message
+* `GET /health` → Health check
+* `GET /r/{short_id}` → Redirect to the original URL (tracks click)
 
----
+#### Authenticated Endpoints (`Authorization: Bearer <Firebase_JWT>`)
 
-#### Health check
+**URL Management:**
 
-```http
-GET /health
-```
+* `POST /u/shorten` → Create short URL (optional custom ID, support private links)
+* `GET /u/click-count/{short_id}` → Get total clicks
+* `GET /u/analytics/{short_id}` → Get click logs (with pagination + filters)
+* `GET /u/click-count/{short_id}/export` → Export click logs (CSV/JSON)
 
-Checks if the server is up and running.
+**Admin Only:**
 
-| Response | Content                                              |
-| -------- | ---------------------------------------------------- |
-| `200`    | `{ "status": "ok", "message": "Server is running" }` |
-| `500`    | Internal server error                                |
+* `POST /admin/blacklist` → Add domain to blacklist
+* `GET /admin/blacklist` → List all blacklisted domains
+* `DELETE /admin/blacklist/{domain}` → Remove domain from blacklist
 
----
+For all available endpoints, request/response schema, and authorization rules, please refer to the [API documentation](https://mfmahendr.github.io/url-shortener-backend/).
 
-#### Redirect to original URL
 
-```http
-GET /r/{short_id}
-```
+## CI/CD Workflow
 
-Redirects to the original URL. Click tracking is performed.
+This project uses **GitHub Actions** for automated testing, building, and deployment. Here's how the pipeline works:
 
-| Parameter  | Type     | Description                |
-| ---------- | -------- | -------------------------- |
-| `short_id` | `string` | **Required.** Short URL ID |
+* **Trigger:**
+  CI/CD runs on every push to the `main` branch, excluding changes to docs (`.md` files, `docs/`, etc.).
 
-| Response | Description                          |
-| -------- | ------------------------------------ |
-| `302`    | Redirects to the original URL        |
-| `400`    | Bad request                          |
-| `403`    | Access denied (private or forbidden) |
-| `404`    | Short ID not found                   |
-| `500`    | Server error                         |
+* **Test Stage:**
+  Runs unit tests and integration tests.
 
----
+* **Build Stage:**
+  If all tests pass, the app is built into a Docker image and pushed to **Google Artifact Registry**. Authentication is handled using **Workload Identity Federation (WIF)**.
 
-#### Create a shortened URL
+* **Deploy Stage:**
+  The Docker image is deployed to **Google Cloud Run** using the `google-github-actions/deploy-cloudrun` action. Environment variables are injected securely using GitHub Secrets and Repository Variables.
 
-```http
-POST /u/shorten
-```
+* **Cloud Run Config:**
 
-Authenticated endpoint to shorten a URL.
-
-| Body Parameter | Type      | Description                              |
-| -------------- | --------- | ---------------------------------------- |
-| `url`          | `string`  | **Required.** Long URL to shorten        |
-| `custom_id`    | `string`  | Optional custom short ID                 |
-| `is_private`   | `boolean` | Optional flag to mark the URL as private |
-
-| Response | Content                     |
-| -------- | --------------------------- |
-| `200`    | `{ "short_id": "abc123" }`  |
-| `400`    | Invalid input               |
-| `401`    | Unauthorized                |
-| `403`    | Forbidden (e.g. unsafe URL) |
-| `409`    | Custom ID conflict          |
-| `500`    | Server error                |
-
----
-
-#### Get total click count
-
-```http
-GET /u/click-count/{short_id}
-```
-
-Returns total clicks for a shortlink owned by the user.
-
-| Parameter  | Type     | Description                |
-| ---------- | -------- | -------------------------- |
-| `short_id` | `string` | **Required.** Short URL ID |
-
-| Response | Content                                       |
-| -------- | --------------------------------------------- |
-| `200`    | `{ "short_id": "abc123", "click_count": 42 }` |
-| `400`    | Bad request                                   |
-| `401`    | Unauthorized                                  |
-| `403`    | Forbidden                                     |
-| `404`    | Not found                                     |
-| `500`    | Server error                                  |
-
----
-
-#### Export click data
-
-```http
-GET /u/click-count/{short_id}/export
-```
-
-Exports click logs as CSV or JSON.
-
-| Parameter  | Type     | Description                         |
-| ---------- | -------- | ----------------------------------- |
-| `short_id` | `string` | **Required.** Short URL ID          |
-| `format`   | `string` | Optional. `csv` (default) or `json` |
-
-| Response | Content            |
-| -------- | ------------------ |
-| `200`    | CSV or JSON export |
-| `400`    | Bad request        |
-| `401`    | Unauthorized       |
-| `403`    | Forbidden          |
-| `415`    | Unsupported format |
-| `500`    | Server error       |
-
----
-
-#### Get analytics
-
-```http
-GET /u/analytics/{short_id}
-```
-
-Returns click analytics with pagination and filters.
-
-| Parameter    | Type      | Description                           |
-| ------------ | --------- | ------------------------------------- |
-| `short_id`   | `string`  | **Required.** Short URL ID            |
-| `limit`      | `integer` | Max records to return                 |
-| `cursor`     | `string`  | Pagination cursor (RFC3339 timestamp) |
-| `after`      | `string`  | Filter clicks after this datetime     |
-| `before`     | `string`  | Filter clicks before this datetime    |
-| `order_desc` | `boolean` | Sort results in descending order      |
-
-| Response | Content                               |
-| -------- | ------------------------------------- |
-| `200`    | JSON with analytics data and metadata |
-| `400`    | Bad request                           |
-| `401`    | Unauthorized                          |
-| `403`    | Forbidden                             |
-| `404`    | Not found                             |
-| `500`    | Server error                          |
-
----
-
-#### Add domain to blacklist (Admin only)
-
-```http
-POST /admin/blacklist
-```
-
-Adds a domain to the blacklist.
-
-| Body Parameter | Type     | Description                   |
-| -------------- | -------- | ----------------------------- |
-| `domain`       | `string` | **Required.** Domain to block |
-
-| Response | Content                                  |
-| -------- | ---------------------------------------- |
-| `200`    | `{ "status": "added", "domain": "..." }` |
-| `400`    | Invalid input                            |
-| `401`    | Unauthorized                             |
-| `403`    | Forbidden                                |
-| `409`    | Domain already blacklisted               |
-| `500`    | Server error                             |
-
----
-
-#### Get blacklist (Admin only)
-
-```http
-GET /admin/blacklist
-```
-
-Returns all blacklisted domains.
-
-| Response | Content                 |
-| -------- | ----------------------- |
-| `200`    | Array of domain strings |
-| `401`    | Unauthorized            |
-| `403`    | Forbidden               |
-| `500`    | Server error            |
-
----
-
-#### Remove domain from blacklist (Admin only)
-
-```http
-DELETE /admin/blacklist/{domain}
-```
-
-| Parameter | Type     | Description                    |
-| --------- | -------- | ------------------------------ |
-| `domain`  | `string` | **Required.** Domain to remove |
-
-| Response | Content                                    |
-| -------- | ------------------------------------------ |
-| `200`    | `{ "status": "removed", "domain": "..." }` |
-| `400`    | Bad request                                |
-| `401`    | Unauthorized                               |
-| `403`    | Forbidden                                  |
-| `404`    | Not found                                  |
-| `500`    | Server error                               |
-
----
-
+  * Service Name: `app`
+  * Region: defined via `GCP_REGION` variable
+  * Other environment variables is `FIREBASE_PROJECT_ID`, `REDIS_ADDR`, `REDIS_PASSWORD`, `SAFE_BROWSING_API_KEY`, etc.
 
 ## License
 
