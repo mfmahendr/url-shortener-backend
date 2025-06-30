@@ -13,7 +13,7 @@ import (
 
 func mapErrorToStatusCode(err error) (statusCode int) {
 	switch {
-	case errors.Is(err, shortlink_errors.ErrBlacklistedID), errors.Is(err, shortlink_errors.ErrForbidden):
+	case errors.Is(err, shortlink_errors.ErrBlacklistedID), errors.Is(err, shortlink_errors.ErrForbidden), errors.Is(err, shortlink_errors.ErrForbiddenInput):
 		statusCode = http.StatusForbidden
 	case errors.Is(err, shortlink_errors.ErrResourceExists), errors.Is(err, shortlink_errors.ErrIDExists):
 		statusCode = http.StatusConflict
