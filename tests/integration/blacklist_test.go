@@ -107,7 +107,7 @@ func TestBlacklist(t *testing.T) {
 		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrValidateRequest.Error())
 	})
 
-	t.Run("Add empty domain", func(t *testing.T) {
+	t.Run("Failed blacklist empty value", func(t *testing.T) {
 		body := `{"type": "domain", "value": ""}`
 		req := httptest.NewRequest(http.MethodPost, "/admin/blacklist", strings.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -119,7 +119,7 @@ func TestBlacklist(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("Add malformed JSON", func(t *testing.T) {
+	t.Run("Failed blacklist malformed JSON", func(t *testing.T) {
 		body := `{`
 		req := httptest.NewRequest(http.MethodPost, "/admin/blacklist", strings.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -131,7 +131,7 @@ func TestBlacklist(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("Add without token", func(t *testing.T) {
+	t.Run("Blacklist without token", func(t *testing.T) {
 		body := `{"type": "domain", "value": "assume-this-as-another-valid-domain-to-be-blacklisted.com"}`
 		req := httptest.NewRequest(http.MethodPost, "/admin/blacklist", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
