@@ -115,7 +115,7 @@ func TestShorten(t *testing.T) {
 		assert.Equal(t, userID, shortlink.CreatedBy)
 		assert.True(t, shortlink.IsPrivate)
 
-		existingCustomID = customID		// for existing customID test case
+		existingCustomID = customID // for existing customID test case
 	})
 
 	t.Run("fail without token", func(t *testing.T) {
@@ -243,6 +243,35 @@ func TestShorten(t *testing.T) {
 
 		assert.Equal(t, http.StatusForbidden, rec.Code)
 		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrForbiddenInput.Error())
+	})
+
+	t.Run("success with non-blacklisted URL path", func(t *testing.T) {
+		customID = "anyCustomIDvalue"
+		body := map[string]interface{}{
+			"url":        "https://this-is-a-blacklisted-url.com/any/other/path?query=must&be=faield",
+			"is_private": false,
+			"custom_id": customID,
+		}
+		bodyBytes, _ := json.Marshal(body)
+
+		req := httptest.NewRequest(http.MethodPost, "/u/shorten", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		controller.Router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		expectedJSONFormat := fmt.Sprintf(`{"short_id": "%s"}`, customID)
+		assert.JSONEq(t, expectedJSONFormat, rec.Body.String(), "")
+
+		// Verify firestore data
+		shortlink, err := fsService.GetShortlink(ctx, customID)
+		require.NoError(t, err)
+		assert.Equal(t, "https://this-is-a-blacklisted-url.com/any/other/path?query=must&be=faield", shortlink.URL)
+		assert.Equal(t, userID, shortlink.CreatedBy)
+		assert.False(t, shortlink.IsPrivate)
 	})
 
 	t.Run("fail with unsafe domain (safebrowsing)", func(t *testing.T) {
