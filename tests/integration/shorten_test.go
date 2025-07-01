@@ -224,7 +224,7 @@ func TestShorten(t *testing.T) {
 		controller.Router.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusForbidden, rec.Code)
-		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrBlacklistedID.Error())
+		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrForbiddenInput.Error())
 	})
 
 	t.Run("fail with unsafe domain (safebrowsing)", func(t *testing.T) {

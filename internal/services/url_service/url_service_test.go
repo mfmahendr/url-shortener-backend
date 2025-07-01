@@ -34,8 +34,8 @@ func (m *MockShortlink) GetShortlink(ctx context.Context, shortID string) (*mode
 // Firestore blacklist checker SERVICE
 type MockBlacklistChecker struct{ mock.Mock }
 
-func (m *MockBlacklistChecker) IsDomainBlacklisted(ctx context.Context, domain string) (bool, error) {
-	args := m.Called(ctx, domain)
+func (m *MockBlacklistChecker) IsBlacklisted(ctx context.Context, inputURL string) (bool, error) {
+	args := m.Called(ctx, inputURL)
 	return args.Bool(0), args.Error(1)
 }
 
