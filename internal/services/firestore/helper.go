@@ -3,6 +3,8 @@ package firestore_service
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -57,4 +59,13 @@ func checkDocumentExists(ctx context.Context, q firestore.Query) (bool, error) {
 		return true, fmt.Errorf("failed to check documents: %w", err)
 	}
 	return false, nil
+}
+
+func normalizeURLForBlacklist(u *url.URL) string {
+	host := strings.ToLower(u.Hostname())
+	path := strings.TrimSuffix(u.EscapedPath(), "/")
+	if path == "" {
+		return host
+	}
+	return host + path
 }

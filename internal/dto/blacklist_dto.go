@@ -1,5 +1,6 @@
 package dto
 
-type BlacklistDomain struct {
-	Domain    string    `json:"domain,omitempty" validate:"required,hostname"`
+type BlacklistItemRequest struct {
+	Type  string `json:"type"`  // "domain" or "url"
+	Value string `json:"value"`
 }
