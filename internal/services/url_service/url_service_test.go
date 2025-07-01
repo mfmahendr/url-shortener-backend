@@ -167,7 +167,7 @@ func TestShorten_SuccessWithCustomID(t *testing.T) {
 			IsPrivate: true,
 		}
 
-		mockBL.On("IsDomainBlacklisted", mock.MatchedBy(func(ctx context.Context) bool {
+		mockBL.On("IsBlacklisted", mock.MatchedBy(func(ctx context.Context) bool {
 			return ctx.Value(utils.UserKey) == "user123"
 		}), "example.com").Return(false, nil) 										// domain is not blacklisted
 		mockSB.On("IsUnsafe", mock.MatchedBy(func(ctx context.Context) bool {
