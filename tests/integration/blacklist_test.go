@@ -158,6 +158,20 @@ func TestBlacklist(t *testing.T) {
 		assert.Contains(t, rec.Body.String(), `"type":"domain"`)
 	})
 
+	t.Run("Successfully remove existing URL", func(t *testing.T) {
+		err := fsService.BlacklistURL(ctx, "https://this-is-a-removable-url-to-be-remove.com/some-path/to/anything")
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodDelete, "/admin/blacklist?type=url&value=https://this-is-a-removable-url-to-be-remove.com/some-path/to/anything", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+
+		controller.Router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Contains(t, rec.Body.String(), `"status":"removed"`)
+	})
+
 	t.Run("Remove non-existent domain", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/admin/blacklist?type=domain&value=notfound.com", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
