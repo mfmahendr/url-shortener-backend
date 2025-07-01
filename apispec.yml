@@ -17,6 +17,13 @@ servers:
   - url: https://api.example.com/
     description: Example API (this is just read-only demo)
 
+  - url: https://{env-url}/
+    description: Production backend server
+    variables:
+      env-url:
+        default: app-533905689825.asia-southeast2.run.app
+        description: Production backend domain
+
   - url: http://localhost:{port}/
     description: Local development server
     variables:
@@ -106,7 +113,10 @@ paths:
       description: >
         Accepts a long URL (and optionally a custom ID), then returns a shortened URL ID.  
         Only accessible by authenticated users.  
-        The system validates against blacklisted domains and Google Safe Browsing.
+        
+        Security checks performed on input URL:
+        - URL and domain are checked against the system's blacklist.
+        - Integration with Google Safe Browsing ensures URLs are not malicious or unsafe.
 
         If `custom_id` is not provided, the system will auto-generate an ID.
       tags:
@@ -343,21 +353,26 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - firebaseAuth: []
-
-  /admin/blacklist/{domain}:
     delete:
       summary: Remove domain from blacklist
       description: Removes a blacklisted domain. Only accessible to admin users.
       tags:
         - Admin
       parameters:
-        - name: domain
-          in: path
+        - name: type
+          in: query
           required: true
-          description: Domain to be removed from blacklist
+          description: Type of blacklist to remove (`domain` or `url`)
           schema:
             type: string
-            format: hostname
+            enum: [domain, url]
+            example: domain
+        - name: value
+          in: query
+          required: true
+          description: The blacklist entry to remove (either domain or URL)
+          schema:
+            type: string
             example: spam-domain.com
       responses:
         '200':
@@ -406,7 +421,14 @@ components:
         url:
           type: string
           format: uri
+          pattern: ^https?://.*
           example: https://example.com/page
+          description: >
+            The original long URL to shorten.  
+            Must be a valid URL with http/https scheme.  
+            Will be checked against:
+            - Blacklisted domains and URLs
+            - Google Safe Browsing API
         custom_id:
           type: string
           example: my_custom_id
@@ -523,18 +545,21 @@ components:
             forbidden access
 
     ForbiddenInput:
-      description: Forbidden input
+      description: Input is forbidden due to blacklist or unsafe content
       content:
         text/plain:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
-            forbidden:
-              value: forbidden
-            blacklistedID:
-              value: custom ID is blacklisted
+            blacklistedOriginalURL:
+              summary: Domain or URL is blacklisted
+              value: the domain or URL is blacklisted
             unsafeURL:
-              value: unsafe URL
+              summary: Unsafe URL detected
+              value: the URL is considered unsafe (phishing or malware)
+            blacklistedID:
+              summary: Custom ID is blacklisted
+              value: custom ID is blacklisted
 
     NotFound:
       description: Data not found
