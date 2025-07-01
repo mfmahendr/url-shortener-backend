@@ -47,8 +47,10 @@ func TestShorten(t *testing.T) {
 	userID, token, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "shortenuser@example.com", nil)
 	require.NoError(t, err)
 
-	// add blacklisted domain data
+	// add blacklisted domain and url data
 	err = fsService.BlacklistDomain(ctx, "this-is-a-blacklisted-domain.com")
+	require.NoError(t, err)
+	err = fsService.BlacklistURL(ctx, "https://this-is-a-blacklisted-url.com/any/path")
 	require.NoError(t, err)
 
 	customID := "customtest123"
@@ -213,7 +215,23 @@ func TestShorten(t *testing.T) {
 
 	t.Run("fail with blacklisted domain", func(t *testing.T) {
 		body := map[string]interface{}{
-			"url": "https://this-is-a-blacklisted-domain.com?query=must&be=faield",
+			"url": "https://this-is-a-blacklisted-domain.com/any/path?query=must&be=faield",
+		}
+		bodyBytes, _ := json.Marshal(body)
+
+		req := httptest.NewRequest(http.MethodPost, "/u/shorten", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+
+		controller.Router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrForbiddenInput.Error())
+	})
+
+	t.Run("fail with blacklisted URL", func(t *testing.T) {
+		body := map[string]interface{}{
+			"url": "https://this-is-a-blacklisted-url.com/any/path?query=must&be=faield",
 		}
 		bodyBytes, _ := json.Marshal(body)
 
