@@ -240,6 +240,6 @@ func TestShorten(t *testing.T) {
 		controller.Router.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusForbidden, rec.Code)
-		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrForbidden.Error())
+		assert.Contains(t, rec.Body.String(), shortlink_errors.ErrForbiddenInput.Error())
 	})
 }

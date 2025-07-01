@@ -93,7 +93,7 @@ func (s *URLServiceImpl) validateURL(ctx context.Context, targetURL string) erro
 		}
 		if isUnsafe {
 			log.Println("This site is unsafe")
-			return shortlink_errors.ErrForbidden
+			return shortlink_errors.ErrForbiddenInput
 		}
 		return nil
 	})
