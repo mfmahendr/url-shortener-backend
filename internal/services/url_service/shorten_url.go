@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/url"
-	"strings"
 	"time"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -68,11 +67,10 @@ func (s *URLServiceImpl) validateURL(ctx context.Context, targetURL string) erro
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
-	domain := strings.ToLower(parsedURL.Hostname())
 
 	// check if urls/its domain is blacklisted
 	eg.Go(func() error {
-		isBlacklisted, err := s.blacklist.IsBlacklisted(ctx, domain)
+		isBlacklisted, err := s.blacklist.IsBlacklisted(ctx, targetURL)
 		if err != nil {
 			log.Println("Error while checking blacklisted items:")
 			return err
