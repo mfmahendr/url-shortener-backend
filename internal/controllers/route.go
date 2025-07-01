@@ -19,7 +19,7 @@ func (c *URLController) RegisterRoutes(auth mw.AuthMiddleware) {
 	c.Router.GET("/u/analytics/:short_id", c.RateLimiter.Apply(auth.RequireAuth(c.Analytics)))
 
 	// admin
-	c.Router.GET("/admin/blacklist", c.RateLimiter.Apply(auth.RequireAdminAuth(c.FetchBlacklistedDomains)))
+	c.Router.GET("/admin/blacklist", c.RateLimiter.Apply(auth.RequireAdminAuth(c.FetchBlacklistItems)))
 	c.Router.POST("/admin/blacklist", c.RateLimiter.Apply(auth.RequireAdminAuth(c.AddToBlacklist)))
 	c.Router.DELETE("/admin/blacklist", c.RateLimiter.Apply(auth.RequireAdminAuth(c.RemoveFromBlacklist)))
 }
