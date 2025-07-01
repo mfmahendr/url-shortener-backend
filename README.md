@@ -166,7 +166,7 @@ The API exposes public and authenticated endpoints for creating and managing sho
 
 * `POST /admin/blacklist` → Add domain to blacklist
 * `GET /admin/blacklist` → List all blacklisted domains
-* `DELETE /admin/blacklist/{domain}` → Remove domain from blacklist
+* `DELETE /admin/blacklist` → Remove domain from blacklist
 
 For all available endpoints, request/response schema, and authorization rules, please refer to the [API documentation](https://mfmahendr.github.io/url-shortener-backend/).
 
