@@ -107,7 +107,7 @@ jobs:
         with:
           service: '${{ env.SERVICE_NAME }}'
           region: '${{ vars.GCR_REGION }}'
-          image: '${{ vars.GCR_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}'
+          image: '${{ vars.GCP_IMAGE_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}'
           env_vars: |
             APP_ENV=production
             FIREBASE_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
