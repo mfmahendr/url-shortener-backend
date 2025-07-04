@@ -21,7 +21,7 @@ servers:
     description: Production backend server
     variables:
       env-url:
-        default: app-533905689825.asia-southeast2.run.app
+        default: https://shorturl.mfadhilmahendra.my.id
         description: Production backend domain
 
   - url: http://localhost:{port}/
