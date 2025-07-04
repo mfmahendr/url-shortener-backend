@@ -13,7 +13,7 @@
         </span>
     </div>
     <div align="center">
-        <a href="https://app-533905689825.asia-southeast2.run.app" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
+        <a href="https://shorturl.mfadhilmahendra.my.id" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
         <a href="https://mfmahendr.github.io/url-shortener-backend/" target="_blank"><strong>📝 View Full API Docs</strong></a>
     </div>
     </br>
@@ -152,6 +152,10 @@ The API exposes public and authenticated endpoints for creating and managing sho
 * `GET /` → Welcome message
 * `GET /health` → Health check
 * `GET /r/{short_id}` → Redirect to the original URL (tracks click)
+
+**Example:**  
+To visit this GitHub repository via a short link, you may open:  
+[https://shorturl.mfadhilmahendra.my.id/r/mybackend](https://shorturl.mfadhilmahendra.my.id/r/mybackend)
 
 #### Authenticated Endpoints (`Authorization: Bearer <Firebase_JWT>`)
 
