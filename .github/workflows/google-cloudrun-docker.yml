@@ -114,6 +114,7 @@ jobs:
             REDIS_ADDR=${{ secrets.ENV_REDIS_ADDR }}
             REDIS_PASSWORD=${{ secrets.ENV_REDIS_PASS }}
             SAFE_BROWSING_API_KEY=${{ secrets.SAFE_BROWSING_API_KEY }}
+            ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}
 
       - name: Show Cloud Run URL
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
