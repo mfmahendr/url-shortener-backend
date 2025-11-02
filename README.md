@@ -13,8 +13,8 @@
         </span>
     </div>
     <div align="center">
-        <a href="https://shorturl.mfadhilmahendra.my.id" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
-        <a href="https://mfmahendr.github.io/url-shortener-backend/" target="_blank"><strong>📝 View Full API Docs</strong></a>
+        <a href="https://shurl.my.id/" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
+        <a href="http://docs.shurl.my.id/" target="_blank"><strong>📝 View Full API Docs</strong></a>
     </div>
     </br>
     <div align="center">
@@ -155,7 +155,7 @@ The API exposes public and authenticated endpoints for creating and managing sho
 
 **Example:**  
 To visit this GitHub repository via a short link, you may open:  
-[https://shorturl.mfadhilmahendra.my.id/r/mybackend](https://shorturl.mfadhilmahendra.my.id/r/mybackend)
+[https://shurl.my.id/r/mybackend](https://shurl.my.id/r/mybackend)
 
 #### Authenticated Endpoints (`Authorization: Bearer <Firebase_JWT>`)
 

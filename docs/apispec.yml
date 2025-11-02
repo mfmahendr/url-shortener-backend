@@ -21,7 +21,7 @@ servers:
     description: Production backend server
     variables:
       env-url:
-        default: https://shorturl.mfadhilmahendra.my.id
+        default: https://shurl.my.id
         description: Production backend domain
 
   - url: http://localhost:{port}/
