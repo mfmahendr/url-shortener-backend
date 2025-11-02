@@ -9,6 +9,7 @@ import (
 
 	"github.com/mfmahendr/url-shortener-backend/config"
 	"github.com/mfmahendr/url-shortener-backend/internal/di"
+	"github.com/mfmahendr/url-shortener-backend/internal/middleware"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 )
 
@@ -46,5 +47,5 @@ func main() {
 	}
 
 	log.Printf("Server listening on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, controller.Router))
+	log.Fatal(http.ListenAndServe(":"+port, middleware.CORS(controller.Router)))
 }
