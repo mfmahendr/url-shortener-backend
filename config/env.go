@@ -25,7 +25,7 @@ func LoadEnv() error {
 }
 
 func checkRequiredEnvVars() error {
-	requiredVars := []string{"FIREBASE_PROJECT_ID", "REDIS_ADDR", "REDIS_PASSWORD", "SAFE_BROWSING_API_KEY"}
+	requiredVars := []string{"FIREBASE_PROJECT_ID", "REDIS_ADDR", "REDIS_PASSWORD", "SAFE_BROWSING_API_KEY", "ALLOWED_ORIGINS"}
 
 	for _, v := range requiredVars {
 		if os.Getenv(v) == "" {
