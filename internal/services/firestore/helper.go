@@ -32,6 +32,22 @@ func (s *FirestoreServiceImpl) buildClickLogsQuery(shortID string, clickLogsQuer
 	return query
 }
 
+func (s *FirestoreServiceImpl) buildUserLinksQuery(createdBy string, q dto.UserLinksQuery) (query firestore.Query) {
+	query = s.client.Collection("shortlinks").Where("created_by", "==", createdBy)
+
+	switch q.IsPrivate {
+	case "true", "yes":
+		query = query.Where("is_private", "==", "true")
+	case "false", "no":
+		query = query.Where("is_private", "==", "false")
+	default:
+	}
+
+	query = buildPaginationQuery(q.PaginationQuery, query)
+
+	return query
+}
+
 func buildPaginationQuery(pq dto.PaginationQuery, query firestore.Query) firestore.Query {
 	if pq.OrderDesc {
 		query = query.OrderBy("timestamp", firestore.Desc)
