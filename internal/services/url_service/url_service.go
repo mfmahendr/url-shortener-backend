@@ -12,6 +12,7 @@ type URLService interface {
 	Shorten(ctx context.Context, req dto.ShortenRequest) (shortID string, err error)
 	Resolve(ctx context.Context, shortID string) (string, error)
 	IsOwner(ctx context.Context, shortID string, uid string) (bool, error)
+	GetUserLinks(ctx context.Context, req dto.UserLinksRequest) (*dto.UserLinksResponse, error)
 }
 
 type URLServiceImpl struct {

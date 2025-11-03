@@ -119,3 +119,29 @@ func (s *URLServiceImpl) saveShortlink(ctx context.Context, req dto.ShortenReque
 	}
 	return doc.ShortID, nil
 }
+
+func (s *URLServiceImpl) GetUserLinks(ctx context.Context, req dto.UserLinksRequest) (*dto.UserLinksResponse, error) {
+	if err := val.Validate.Struct(req); err != nil {
+		return nil, shortlink_errors.ErrValidateRequest
+	}
+
+	links, nextCursor, err := s.shortlink.ListUserLinks(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	dtoLinks := make([]dto.ShortlinkDTO, 0, len(links))
+	for _, l := range links {
+		dtoLinks = append(dtoLinks, dto.ShortlinkDTO{
+			ShortID:   l.ShortID,
+			URL:       l.URL,
+			CreatedAt: l.CreatedAt,
+			IsPrivate: l.IsPrivate,
+		})
+	}
+
+	return &dto.UserLinksResponse{
+		Links:      dtoLinks,
+		NextCursor: nextCursor,
+	}, nil
+}
