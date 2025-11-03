@@ -31,6 +31,11 @@ func (m *MockShortlink) GetShortlink(ctx context.Context, shortID string) (*mode
 	return args.Get(0).(*models.Shortlink), args.Error(1)
 }
 
+func (m *MockShortlink) ListUserLinks(ctx context.Context, req dto.UserLinksRequest) ([]models.Shortlink, string, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).([]models.Shortlink), args.Get(1).(string), args.Error(2)
+}
+
 // Firestore blacklist checker SERVICE
 type MockBlacklistChecker struct{ mock.Mock }
 

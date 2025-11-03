@@ -20,12 +20,12 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func (s *TrackingServiceImpl) StreamClickLogs(ctx context.Context, w http.ResponseWriter, query dto.ClickLogsQuery) error {
-	if err := validators.Validate.Var(query.ShortID, "short_id"); err != nil {
+func (s *TrackingServiceImpl) StreamClickLogs(ctx context.Context, w http.ResponseWriter, req dto.ClickLogsRequest) error {
+	if err := validators.Validate.Var(req.ShortID, "short_id"); err != nil {
 		return shortlink_errors.ErrValidateRequest
 	}
 
-	iter, err := s.firestore.StreamClickLogs(ctx, query.ShortID)
+	iter, err := s.firestore.StreamClickLogs(ctx, req.ShortID)
 	if err != nil {
 		return err
 	}

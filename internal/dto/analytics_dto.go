@@ -16,3 +16,8 @@ type ClickLogDTO struct {
 	IP        string    `json:"ip"`
 	UserAgent string    `json:"user_agent"`
 }
+
+type ClickLogsRequest struct {
+	ShortID   string    `json:"short_id" validate:"required,short_id"`
+	ClickLogsQuery
+}

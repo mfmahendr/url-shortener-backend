@@ -2,18 +2,18 @@ package tracking_service
 
 import (
 	"context"
-	
+
 	"github.com/mfmahendr/url-shortener-backend/internal/dto"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/validators"
 )
 
-func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, query dto.ClickLogsQuery) (*dto.AnalyticsDTO, error) {
-	if err := validators.Validate.Struct(query); err != nil {
+func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, req dto.ClickLogsRequest) (*dto.AnalyticsDTO, error) {
+	if err := validators.Validate.Struct(req); err != nil {
 		return nil, shortlink_errors.ErrValidateRequest
 	}
 
-	logs, nextCursor, err := t.firestore.GetClickLogs(ctx, query)
+	logs, nextCursor, err := t.firestore.GetClickLogs(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (t *TrackingServiceImpl) GetAnalytics(ctx context.Context, query dto.ClickL
 	}
 
 	responseData := &dto.AnalyticsDTO{
-		ShortID:     query.ShortID,
+		ShortID:     req.ShortID,
 		TotalClicks: count,
 		Clicks:      dtoLogs,
 		NextCursor:  nextCursor,
