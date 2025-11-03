@@ -44,6 +44,19 @@ func verifyOwnerAccess(w http.ResponseWriter, err error, isOwner bool) bool {
 }
 
 func parseClickLogsQuery(r *http.Request, query *dto.ClickLogsQuery) {
+	parsePaginationQuery(r, &query.PaginationQuery)
+
+	if after := r.URL.Query().Get("after"); after != "" {
+		t, _ := time.Parse(time.RFC3339, after)
+		query.After = t
+	}
+	if before := r.URL.Query().Get("before"); before != "" {
+		t, _ := time.Parse(time.RFC3339, before)
+		query.Before = t
+	}
+}
+
+func parsePaginationQuery(r *http.Request, query *dto.PaginationQuery) {
 	if l := r.URL.Query().Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil {
 			query.Limit = parsed
@@ -54,13 +67,4 @@ func parseClickLogsQuery(r *http.Request, query *dto.ClickLogsQuery) {
 
 	query.Cursor = r.URL.Query().Get("cursor")
 	query.OrderDesc = r.URL.Query().Get("order") == "desc"
-
-	if after := r.URL.Query().Get("after"); after != "" {
-		t, _ := time.Parse(time.RFC3339, after)
-		query.After = t
-	}
-	if before := r.URL.Query().Get("before"); before != "" {
-		t, _ := time.Parse(time.RFC3339, before)
-		query.Before = t
-	}
 }

@@ -11,7 +11,6 @@ type PaginationQuery struct {
 }
 
 type ClickLogsQuery struct {
-	ShortID   string    `json:"short_id" validate:"required,short_id"`
 	UserAgent string    `json:"user_agent,omitempty" validate:"omitempty"`
 	After     time.Time `json:"after" validate:"omitempty,datetime"`
 	Before    time.Time `json:"before" validate:"omitempty,datetime"`
