@@ -41,6 +41,7 @@ func (c *URLController) GetShortlinks(w http.ResponseWriter, r *http.Request, _ 
 			http.Error(w, "Failed to get users' shortlinks: "+err.Error(), statusCode)
 		}
 	}
+	resp.CreatedBy = linksReq.CreatedBy
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
