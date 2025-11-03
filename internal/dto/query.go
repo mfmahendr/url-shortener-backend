@@ -11,7 +11,7 @@ type PaginationQuery struct {
 }
 
 type UserLinksQuery struct {
-	IsPrivate string `json:"is_private" validate:"omitempty,oneof='true' 'yes' 'no' 'false' 'all'"`
+	IsPrivate string `json:"is_private" validate:"omitempty,oneof=true yes no false all"`
 	PaginationQuery
 }
 
