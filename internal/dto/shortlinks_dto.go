@@ -10,6 +10,7 @@ type UserLinksRequest struct {
 type UserLinksResponse struct {
 	Links      []ShortlinkDTO `json:"links"`
 	NextCursor string         `json:"next_cursor"`
+	CreatedBy  string         `json:"created_by"`
 }
 
 type ShortlinkDTO struct {
