@@ -3,22 +3,32 @@ package middleware
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func CORS(router *httprouter.Router) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ALLOWED_ORIGINS"))
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	allowed := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+	allowedMap := make(map[string]bool)
+	for _, origin := range allowed {
+		allowedMap[strings.TrimSpace(origin)] = true
+	}
 
-        if r.Method == http.MethodOptions {
-            w.WriteHeader(http.StatusOK)
-            return
-        }
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if allowedMap[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 
-        router.ServeHTTP(w, r)
-    })
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		router.ServeHTTP(w, r)
+	})
 }
