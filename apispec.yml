@@ -544,19 +544,16 @@ components:
     UserLinksResponse:
       type: object
       properties:
-        shortlinks:
+        links:
           type: array
           items:
             $ref: '#/components/schemas/Shortlink'
-        pagination:
-          type: object
-          properties:
-            next_cursor:
-              type: string
-              example: eyJpZCI6IjEyMyJ9
-            has_more:
-              type: boolean
-              example: true
+        next_cursor:
+          type: string
+          example: eyJpZCI6IjEyMyJ9
+        created_by:
+          type: string
+          example: XXXXXXXXXXXXXXXXXXX
 
     Shortlink:
       type: object
