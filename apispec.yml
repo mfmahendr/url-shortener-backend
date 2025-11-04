@@ -8,6 +8,7 @@ info:
     Features:
     - Create short links for long URLs, with optional custom IDs
     - Redirect to the original URL via short link
+    - Retrieve a list of shortlinks belonging to the authenticated user.
     - Private shortlinks (only accessible by the creator)
     - Track click analytics (IP address, user-agent, timestamp)
     - Export click data in JSON or CSV format
@@ -21,7 +22,7 @@ servers:
     description: Production backend server
     variables:
       env-url:
-        default: https://shurl.my.id
+        default: shurl.my.id
         description: Production backend domain
 
   - url: http://localhost:{port}/
@@ -147,6 +148,46 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - firebaseAuth: []
+  /u/shortlinks:
+    get:
+      summary: Retrieve all shortlinks created by the authenticated user
+      description: >
+        Retrieves a list of shortlinks belonging to the authenticated user.
+
+        - Only accessible by the authenticated user (Firebase JWT required).
+
+        - Supports filtering by privacy status (`is_private`), and pagination using `limit` and `cursor`.
+
+        - Returns next cursor for pagination continuation.
+      tags:
+        - Shortlink Services
+      parameters:
+        - name: is_private
+          $ref: '#/components/parameters/Link_Privacy'
+        - name: limit
+          $ref: '#/components/parameters/Pagination_Limit'
+        - name: cursor
+          $ref: '#/components/parameters/Pagination_Cursor'
+        - name: order
+          $ref: '#/components/parameters/Pagination_Order'
+      responses:
+        '200':
+          description: List of user shortlinks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLinksResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      security:
+        - firebaseAuth: []
+
 
   /u/click-count/{short_id}:
     get:
@@ -262,15 +303,15 @@ paths:
         - name: short_id
           $ref: '#/components/parameters/ShortID'
         - name: limit
-          $ref: '#/components/parameters/Analytics_Limit'
+          $ref: '#/components/parameters/Pagination_Limit'
         - name: cursor
-          $ref: '#/components/parameters/Analytics_Cursor'
+          $ref: '#/components/parameters/Pagination_Cursor'
         - name: after
           $ref: '#/components/parameters/Analytics_After'
         - name: before
           $ref: '#/components/parameters/Analytics_Before'
         - name: order_desc
-          $ref: '#/components/parameters/Analytics_Order'
+          $ref: '#/components/parameters/Pagination_Order'
       responses:
         '200':
           description: Analytics data retrieved successfully
@@ -500,6 +541,50 @@ components:
       type: string
       example: Internal server error
 
+    UserLinksResponse:
+      type: object
+      properties:
+        shortlinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shortlink'
+        pagination:
+          type: object
+          properties:
+            next_cursor:
+              type: string
+              example: eyJpZCI6IjEyMyJ9
+            has_more:
+              type: boolean
+              example: true
+
+    Shortlink:
+      type: object
+      description: Represents a user's short URL entry.
+      properties:
+        short_id:
+          type: string
+          description: Unique identifier for the shortlink
+          example: "abc123"
+        url:
+          type: string
+          format: uri
+          description: The original destination URL
+          example: "https://example.com/promo"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the shortlink was created
+          example: "2025-10-30T14:32:00Z"
+        created_by:
+          type: string
+          description: User identifier
+          example: "XY1XYX4YXY2XYXY4X6YXYXY2XY"
+        is_private:
+          type: boolean
+          description: Determining privacy status of the link. This determines whether the link can be accessed by unauthenticated visitors or not.
+
+
   requestBodies:
     ShortenRequest:
       required: true
@@ -620,7 +705,22 @@ components:
         enum: [csv, json]
         default: csv
 
-    Analytics_Limit:
+    Link_Privacy:
+      name: is_private
+      in: query
+      description: |
+        Filter shortlinks by privacy status.
+
+        - `true` or `yes` → Only private shortlinks  
+        - `false` or `no` → Only public shortlinks  
+        - `all` (default) → All shortlinks
+      required: false
+      schema:
+        type: string
+        enum: [true, false, yes, no, all]
+        default: all
+
+    Pagination_Limit:
       name: limit
       in: query
       required: false
@@ -630,7 +730,7 @@ components:
         minimum: 1
         example: 50
 
-    Analytics_Cursor:
+    Pagination_Cursor:
       name: cursor
       in: query
       required: false
@@ -658,7 +758,7 @@ components:
         type: string
         format: date-time
 
-    Analytics_Order:
+    Pagination_Order:
       name: order_desc
       in: query
       required: false
