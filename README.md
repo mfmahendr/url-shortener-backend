@@ -99,6 +99,7 @@ In production, these values should be passed as environment variables via your d
 |-------------------------------|------------------------------------------------------------------|
 | `APP_ENV`                     | Application environment (must be `development` or `production`)       |
 | `PORT`                        | Port number for the HTTP server (default: `8080`)                |
+| `ALLOWED_ORIGINS`             | Comma-separated list of allowed CORS origins                      |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path to your Firebase service account key JSON file (**local development only**). In production, use default credentials. |
 | `FIREBASE_PROJECT_ID`         | Your Firebase project ID                                         |
 | `REDIS_ADDR`                  | Redis server address (e.g. `localhost:6379`)                     |
@@ -197,6 +198,7 @@ This project uses **GitHub Actions** for automated testing, building, and deploy
 
   * Service Name: `app`
   * Region: defined via `GCP_REGION` variable
+  * Allowed origin: defined via `ALLOWED_ORIGINS` variable. You can set multiple origins separated by commas (,). If you set this in github variables, make sure to escape the commas (`,`) with backslash (`\`).
   * Other environment variables is `FIREBASE_PROJECT_ID`, `REDIS_ADDR`, `REDIS_PASSWORD`, `SAFE_BROWSING_API_KEY`, etc.
 
 ## License
