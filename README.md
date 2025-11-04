@@ -14,7 +14,7 @@
     </div>
     <div align="center">
         <a href="https://shurl.my.id/" target="_blank"><strong>🔗 Visit the Live API</strong></a> ・
-        <a href="http://docs.shurl.my.id/" target="_blank"><strong>📝 View Full API Docs</strong></a>
+        <a href="https://docs.shurl.my.id/" target="_blank"><strong>📝 View Full API Docs</strong></a>
     </div>
     </br>
     <div align="center">
@@ -35,6 +35,7 @@ This is an API allowing users to shorten long URLs and redirect from a short lin
 
 * Create short links for a long URLs, with optional custom IDs
 * Redirect to the original URL via short link
+* Retrieve a list of shortlinks belonging to the authenticated user
 * Private shortlinks (only accessible by the creator)
 * Track click analytics (IP address, user-agent, timestamp)
 * Export click data in JSON or CSV format
@@ -144,7 +145,7 @@ Integration test will automatically spin up containers for Firebase Emulator and
 The API exposes public and authenticated endpoints for creating and managing short URLs, including analytics and blacklist administration.
 
 > Full API docs are available at:
-> **[https://mfmahendr.github.io/url-shortener-backend/](https://mfmahendr.github.io/url-shortener-backend/)**
+> **[https://docs.shurl.my.id/](https://docs.shurl.my.id/)**
 > *(Swagger UI served from GitHub Pages, powered by OpenAPI 3.0)*
 
 #### Public Endpoints
@@ -162,6 +163,7 @@ To visit this GitHub repository via a short link, you may open:
 **URL Management:**
 
 * `POST /u/shorten` → Create short URL (optional custom ID, support private links)
+* `GET /u/shortlinks` → Fetch shortlinks belonging to the authenticated user 
 * `GET /u/click-count/{short_id}` → Get total clicks
 * `GET /u/analytics/{short_id}` → Get click logs (with pagination + filters)
 * `GET /u/click-count/{short_id}/export` → Export click logs (CSV/JSON)
@@ -172,7 +174,7 @@ To visit this GitHub repository via a short link, you may open:
 * `GET /admin/blacklist` → List all blacklisted domains
 * `DELETE /admin/blacklist` → Remove domain from blacklist
 
-For all available endpoints, request/response schema, and authorization rules, please refer to the [API documentation](https://mfmahendr.github.io/url-shortener-backend/).
+For all available endpoints, request/response schema, and authorization rules, please refer to the [API documentation](https://docs.shurl.my.id/).
 
 
 ## CI/CD Workflow
