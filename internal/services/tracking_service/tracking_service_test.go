@@ -28,8 +28,8 @@ func (m *MockClickLogStore) AddClickLog(ctx context.Context, log *models.ClickLo
 	return args.Error(0)
 }
 
-func (m *MockClickLogStore) GetClickLogs(ctx context.Context, query dto.ClickLogsQuery) ([]models.ClickLog, string, error) {
-	args := m.Called(ctx, query)
+func (m *MockClickLogStore) GetClickLogs(ctx context.Context, req dto.ClickLogsRequest) ([]models.ClickLog, string, error) {
+	args := m.Called(ctx, req)
 	return args.Get(0).([]models.ClickLog), args.String(1), args.Error(2)
 }
 
@@ -114,35 +114,35 @@ func TestTrackingService_GetAnalytics(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Success", func(t *testing.T) {
-		query := dto.ClickLogsQuery{ShortID: "correctshortid"}
+		req := dto.ClickLogsRequest{ShortID: "correctshortid"}
 		logs := []models.ClickLog{
 			{Timestamp: time.Now(), IP: ":abcd:1", UserAgent: "A User Agent"},
 			{Timestamp: time.Now(), IP: "127.0.0.1", UserAgent: "Another UA"},
 		}
 
-		store.On("GetClickLogs", mock.Anything, query).Return(logs, "", nil)
+		store.On("GetClickLogs", mock.Anything, req).Return(logs, "", nil)
 
-		result, err := svc.GetAnalytics(ctx, query)
+		result, err := svc.GetAnalytics(ctx, req)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		assert.Equal(t, int64(len(logs)), result.TotalClicks)
-		assert.Equal(t, query.ShortID, result.ShortID)
+		assert.Equal(t, req.ShortID, result.ShortID)
 		store.AssertExpectations(t)
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
-		query := dto.ClickLogsQuery{}
-		result, err := svc.GetAnalytics(ctx, query)
+		req := dto.ClickLogsRequest{}
+		result, err := svc.GetAnalytics(ctx, req)
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Equal(t, shortlink_errors.ErrValidateRequest, err)
 	})
 
 	t.Run("Store Error", func(t *testing.T) {
-		query := dto.ClickLogsQuery{ShortID: "incorrectshortid"}		// make sure this value is different from Success test case
-		store.On("GetClickLogs", mock.Anything, query).Return([]models.ClickLog(nil), "", shortlink_errors.ErrFailedRetrieveData)
+		req := dto.ClickLogsRequest{ShortID: "incorrectshortid"}		// make sure this value is different from Success test case
+		store.On("GetClickLogs", mock.Anything, req).Return([]models.ClickLog(nil), "", shortlink_errors.ErrFailedRetrieveData)
 
-		result, err := svc.GetAnalytics(ctx, query)
+		result, err := svc.GetAnalytics(ctx, req)
 		require.Error(t, err)
 		assert.Nil(t, result)
 

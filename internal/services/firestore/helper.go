@@ -15,10 +15,10 @@ import (
 )
 
 
-func (s *FirestoreServiceImpl) buildQuery(clickLogsQuery dto.ClickLogsQuery) (query firestore.Query) {
-	query = s.client.Collection("click_logs").Where("short_id", "==", clickLogsQuery.ShortID)
+func (s *FirestoreServiceImpl) buildClickLogsQuery(shortID string, clickLogsQuery dto.ClickLogsQuery) (query firestore.Query) {
+	query = s.client.Collection("click_logs").Where("short_id", "==", shortID)
 
-	// Filter range waktu
+	// Filter the range of click logs
 	if !clickLogsQuery.After.IsZero() {
 		query = query.Where("timestamp", ">", clickLogsQuery.After)
 	}
@@ -26,27 +26,53 @@ func (s *FirestoreServiceImpl) buildQuery(clickLogsQuery dto.ClickLogsQuery) (qu
 		query = query.Where("timestamp", "<", clickLogsQuery.Before)
 	}
 
-	// Urutan
 	if clickLogsQuery.OrderDesc {
 		query = query.OrderBy("timestamp", firestore.Desc)
 	} else {
 		query = query.OrderBy("timestamp", firestore.Asc)
 	}
 
+	// pagination query
+	query = buildPaginationQuery(clickLogsQuery.PaginationQuery, query)
+
+	return query
+}
+
+func (s *FirestoreServiceImpl) buildUserLinksQuery(createdBy string, q dto.UserLinksQuery) (query firestore.Query) {
+	query = s.client.Collection("shortlinks").Where("created_by", "==", createdBy)
+
+	switch q.IsPrivate {
+	case "true", "yes":
+		query = query.Where("is_private", "==", true)
+	case "false", "no":
+		query = query.Where("is_private", "==", false)
+	}
+
+	if q.OrderDesc {
+		query = query.OrderBy("created_at", firestore.Desc)
+	} else {
+		query = query.OrderBy("created_at", firestore.Asc)
+	}
+
+	query = buildPaginationQuery(q.PaginationQuery, query)
+
+	return query
+}
+
+func buildPaginationQuery(pq dto.PaginationQuery, query firestore.Query) firestore.Query {
 	// Cursor
-	if clickLogsQuery.Cursor != "" {
-		parsedCursor, err := time.Parse(time.RFC3339Nano, clickLogsQuery.Cursor)
+	if pq.Cursor != "" {
+		parsedCursor, err := time.Parse(time.RFC3339Nano, pq.Cursor)
 		if err == nil {
 			query = query.StartAfter(parsedCursor)
 		}
 	}
 
 	// Limit
-	if clickLogsQuery.Limit <= 0 || clickLogsQuery.Limit > 100 {
-		clickLogsQuery.Limit = 50
+	if pq.Limit <= 0 || pq.Limit > 100 {
+		pq.Limit = 50
 	}
-	query = query.Limit(clickLogsQuery.Limit)
-
+	query = query.Limit(pq.Limit)
 	return query
 }
 

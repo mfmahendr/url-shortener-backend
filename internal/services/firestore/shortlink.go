@@ -3,13 +3,17 @@ package firestore_service
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/mfmahendr/url-shortener-backend/internal/dto"
 	"github.com/mfmahendr/url-shortener-backend/internal/models"
 	"github.com/mfmahendr/url-shortener-backend/internal/utils/shortlink_errors"
+	"google.golang.org/api/iterator"
 )
 
 type Shortlink interface {
 	// DeleteShortlink(ctx context.Context, shortID string) error
+	ListUserLinks(ctx context.Context, req dto.UserLinksRequest) ([]models.Shortlink, string, error)
 	GetShortlink(ctx context.Context, shortID string) (*models.Shortlink, error)
 	SetShortlink(ctx context.Context, shortID string, doc models.Shortlink) error
 }
@@ -39,4 +43,34 @@ func (s *FirestoreServiceImpl) GetShortlink(ctx context.Context, shortID string)
 	}
 
 	return &shortlink, nil
+}
+
+func (s *FirestoreServiceImpl) ListUserLinks(ctx context.Context, req dto.UserLinksRequest) ([]models.Shortlink, string, error) {
+	queryFirestore := s.buildUserLinksQuery(req.CreatedBy, req.UserLinksQuery)
+	iter := queryFirestore.Documents(ctx)
+	defer iter.Stop()
+
+	var links []models.Shortlink
+	var nextCursor string
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			fmt.Printf("Error retrieving document: %v\n", err)
+			return nil, "", shortlink_errors.ErrFailedRetrieveData
+		}
+
+		var link models.Shortlink
+		if doc.DataTo(&link) != nil {
+			fmt.Printf("Error converting document data to Shortlink: %v\n", err)
+			return nil, "", shortlink_errors.ErrFailedRetrieveData
+		}
+
+		links = append(links, link)
+		nextCursor = link.CreatedAt.Format(time.RFC3339Nano)
+	}
+
+	return links, nextCursor, nil
 }

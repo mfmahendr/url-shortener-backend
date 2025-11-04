@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -29,6 +30,11 @@ func (m *MockShortlink) SetShortlink(ctx context.Context, shortID string, link m
 func (m *MockShortlink) GetShortlink(ctx context.Context, shortID string) (*models.Shortlink, error) {
 	args := m.Called(ctx, shortID)
 	return args.Get(0).(*models.Shortlink), args.Error(1)
+}
+
+func (m *MockShortlink) ListUserLinks(ctx context.Context, req dto.UserLinksRequest) ([]models.Shortlink, string, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).([]models.Shortlink), args.Get(1).(string), args.Error(2)
 }
 
 // Firestore blacklist checker SERVICE
@@ -169,17 +175,17 @@ func TestShorten_SuccessWithCustomID(t *testing.T) {
 
 		mockBL.On("IsBlacklisted", mock.MatchedBy(func(ctx context.Context) bool {
 			return ctx.Value(utils.UserKey) == "user123"
-		}), req.URL).Return(false, nil) 											// domain is not blacklisted
+		}), req.URL).Return(false, nil) // domain is not blacklisted
 		mockSB.On("IsUnsafe", mock.MatchedBy(func(ctx context.Context) bool {
 			return ctx.Value(utils.UserKey) == "user123"
-		}), req.URL).Return(false, nil) 											// domain is safe
+		}), req.URL).Return(false, nil) // domain is safe
 		mockSL.On("GetShortlink", mock.MatchedBy(func(c context.Context) bool {
 			return c.Value(utils.UserKey) == "user123"
 		}), req.CustomID).Return(&models.Shortlink{}, shortlink_errors.ErrNotFound) // shortlink not already in the database
 
 		mockSL.On("SetShortlink", mock.MatchedBy(func(c context.Context) bool {
 			return c.Value(utils.UserKey) == "user123"
-		}), req.CustomID, mock.Anything).Return(nil) 								// successful set and save the shortlink
+		}), req.CustomID, mock.Anything).Return(nil) // successful set and save the shortlink
 
 		shortID, err := svc.Shorten(ctx, req)
 
@@ -206,4 +212,59 @@ func TestShorten_InvalidURL(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, shortlink_errors.ErrValidateRequest, err)
 	})
+}
+
+func TestListUserLinks(t *testing.T) {
+	mockSL := new(MockShortlink)
+	mockBL := new(MockBlacklistChecker)
+	mockSB := new(MockURLSafetyChecker)
+
+	svc := url_service.New(mockSL, mockBL, mockSB)
+
+	shortlinks1 := []models.Shortlink{
+		{ShortID: "short1", URL: "https://original1.link", CreatedAt: time.Now(), CreatedBy: "user1", IsPrivate: false},
+		{ShortID: "short5", URL: "https://original5.link", CreatedAt: time.Now(), CreatedBy: "user1", IsPrivate: true},
+		{ShortID: "short6", URL: "https://original6.link", CreatedAt: time.Now(), CreatedBy: "user1", IsPrivate: false},
+		{ShortID: "short8", URL: "https://original8.link", CreatedAt: time.Now(), CreatedBy: "user1", IsPrivate: false},
+	}
+	
+	shortlinks2 := []models.Shortlink{
+		{ShortID: "short2", URL: "https://original2.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: false},
+		{ShortID: "short3", URL: "https://original3.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: true},
+		{ShortID: "short4", URL: "https://original4.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: false},
+		{ShortID: "short7", URL: "https://original7.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: true},
+		{ShortID: "short9", URL: "https://original9.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: true},
+		{ShortID: "short10", URL: "https://original10.link", CreatedAt: time.Now(), CreatedBy: "user2", IsPrivate: true},
+	}
+	mockSL.On("ListUserLinks", mock.Anything, mock.MatchedBy(func(r dto.UserLinksRequest) bool {
+		return r.CreatedBy == "user1"
+	})).Return(shortlinks1, "cursor_user1", nil)
+
+	mockSL.On("ListUserLinks", mock.Anything, mock.MatchedBy(func(r dto.UserLinksRequest) bool {
+		return r.CreatedBy == "user2"
+	})).Return(shortlinks2, "cursor_user2", nil)
+
+	t.Run("Should return links for user1", func(t *testing.T) {
+		req := dto.UserLinksRequest{CreatedBy: "user1"}
+		resp, err := svc.GetUserLinks(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "cursor_user1", resp.NextCursor)
+		assert.Len(t, resp.Links, len(shortlinks1))
+		assert.Equal(t, shortlinks1[0].ShortID, resp.Links[0].ShortID)
+	})
+
+	t.Run("Should return links for user2", func(t *testing.T) {
+		req := dto.UserLinksRequest{CreatedBy: "user2"}
+		resp, err := svc.GetUserLinks(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "cursor_user2", resp.NextCursor)
+		assert.Len(t, resp.Links, len(shortlinks2))
+		assert.Equal(t, shortlinks2[0].ShortID, resp.Links[0].ShortID)
+	})
+
+	mockSL.AssertExpectations(t)
 }

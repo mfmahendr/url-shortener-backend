@@ -63,7 +63,7 @@ func (c *URLController) ExportAllClickCount(w http.ResponseWriter, r *http.Reque
 		format = "csv"
 	}
 	ctx := context.WithValue(r.Context(), utils.ExportFormatKey, format)
-	query := dto.ClickLogsQuery{
+	query := dto.ClickLogsRequest{
 		ShortID: shortID,
 	}
 

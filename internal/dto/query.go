@@ -10,8 +10,12 @@ type PaginationQuery struct {
 	OrderDesc bool   `json:"order_desc" validate:"-"`
 }
 
+type UserLinksQuery struct {
+	IsPrivate string `json:"is_private" validate:"omitempty,oneof=true yes no false all"`
+	PaginationQuery
+}
+
 type ClickLogsQuery struct {
-	ShortID   string    `json:"short_id" validate:"required,short_id"`
 	UserAgent string    `json:"user_agent,omitempty" validate:"omitempty"`
 	After     time.Time `json:"after" validate:"omitempty,datetime"`
 	Before    time.Time `json:"before" validate:"omitempty,datetime"`
