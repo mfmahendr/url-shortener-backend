@@ -20,7 +20,7 @@ func (c *URLController) GetShortlinks(w http.ResponseWriter, r *http.Request, _ 
 	// queries
 	var isPrivateQ string
 	paginationQ := new(dto.PaginationQuery)
-	if isPrivateQ = r.URL.Query().Get("is_private"); isPrivateQ != "" {
+	if isPrivateQ = r.URL.Query().Get("is_private"); isPrivateQ == "" {
 		isPrivateQ = "all"
 	}
 	parsePaginationQuery(r, paginationQ)
@@ -40,6 +40,7 @@ func (c *URLController) GetShortlinks(w http.ResponseWriter, r *http.Request, _ 
 		if statusCode != http.StatusNotFound {
 			http.Error(w, "Failed to get users' shortlinks: "+err.Error(), statusCode)
 		}
+		resp = &dto.UserLinksResponse{}
 	}
 	resp.CreatedBy = linksReq.CreatedBy
 

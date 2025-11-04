@@ -26,6 +26,12 @@ func (s *FirestoreServiceImpl) buildClickLogsQuery(shortID string, clickLogsQuer
 		query = query.Where("timestamp", "<", clickLogsQuery.Before)
 	}
 
+	if clickLogsQuery.OrderDesc {
+		query = query.OrderBy("timestamp", firestore.Desc)
+	} else {
+		query = query.OrderBy("timestamp", firestore.Asc)
+	}
+
 	// pagination query
 	query = buildPaginationQuery(clickLogsQuery.PaginationQuery, query)
 
@@ -37,10 +43,15 @@ func (s *FirestoreServiceImpl) buildUserLinksQuery(createdBy string, q dto.UserL
 
 	switch q.IsPrivate {
 	case "true", "yes":
-		query = query.Where("is_private", "==", "true")
+		query = query.Where("is_private", "==", true)
 	case "false", "no":
-		query = query.Where("is_private", "==", "false")
-	default:
+		query = query.Where("is_private", "==", false)
+	}
+
+	if q.OrderDesc {
+		query = query.OrderBy("created_at", firestore.Desc)
+	} else {
+		query = query.OrderBy("created_at", firestore.Asc)
 	}
 
 	query = buildPaginationQuery(q.PaginationQuery, query)
@@ -49,12 +60,6 @@ func (s *FirestoreServiceImpl) buildUserLinksQuery(createdBy string, q dto.UserL
 }
 
 func buildPaginationQuery(pq dto.PaginationQuery, query firestore.Query) firestore.Query {
-	if pq.OrderDesc {
-		query = query.OrderBy("timestamp", firestore.Desc)
-	} else {
-		query = query.OrderBy("timestamp", firestore.Asc)
-	}
-
 	// Cursor
 	if pq.Cursor != "" {
 		parsedCursor, err := time.Parse(time.RFC3339Nano, pq.Cursor)
