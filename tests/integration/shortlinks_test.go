@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -36,31 +37,31 @@ func TestGetUserLinks(t *testing.T) {
 	userID, token, err := createTestUserAndToken(ctx, authMiddleware.AuthClient, "getusershortlinks.user@example.com", nil)
 	require.NoError(t, err)
 
-	// Buat beberapa shortlink untuk user
 	shortlinkData := []struct {
 		ID        string
 		URL       string
-		IsPrivate bool
+		IsPrivate string
 	}{
-		{"u1_pub", "https://public1.example.com", false},
-		{"u1_prv", "https://private1.example.com", true},
-		{"u1_pub2", "https://public2.example.com", false},
+		{"u1_pub", "https://public1.example.com", "false"},
+		{"u1_prv", "https://private1.example.com", "true"},
+		{"u1_pub2", "https://public2.example.com", "false"},
 	}
 
-	createdByNow := time.Now()
+	createdAtNow := time.Now()
 
 	expectedCorrectUserLinksAmout := 0
 	for _, s := range shortlinkData {
+		isPriv, _ := strconv.ParseBool(s.IsPrivate)
 		err := fsService.SetShortlink(ctx, s.ID, models.Shortlink{
 			ShortID:   s.ID,
 			URL:       s.URL,
-			IsPrivate: s.IsPrivate,
+			IsPrivate: isPriv,
 			CreatedBy: userID,
-			CreatedAt: createdByNow,
+			CreatedAt: createdAtNow,
 		})
-		createdByNow = createdByNow.Add(time.Second)
+		createdAtNow = createdAtNow.Add(time.Second)
+		expectedCorrectUserLinksAmout += 1
 		require.NoError(t, err)
-		expectedCorrectUserLinksAmout++
 	}
 
 	// other shortlink created by other.user@example.com to ascertain filtering
@@ -69,13 +70,13 @@ func TestGetUserLinks(t *testing.T) {
 	err = fsService.SetShortlink(ctx, "other_pub", models.Shortlink{
 		ShortID:   "other_pub",
 		URL:       "https://otheruser.link",
-		CreatedAt: createdByNow.Add(time.Second),
+		CreatedAt: createdAtNow.Add(time.Second),
 		CreatedBy: otherUserID,
 		IsPrivate: false,
 	})
 	require.NoError(t, err)
 
-	// ---- TEST CASES ----
+	// TEST CASES
 	t.Run("success get all user links (default all)", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/u/shortlinks", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -89,7 +90,7 @@ func TestGetUserLinks(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Equal(t, userID, resp.CreatedBy)
-		assert.Equal(t, len(resp.Links), expectedCorrectUserLinksAmout)
+		assert.Equal(t, expectedCorrectUserLinksAmout, len(resp.Links))
 		for _, l := range resp.Links {
 			assert.NotEqual(t, "other_pub", l.ShortID)
 		}
