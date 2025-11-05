@@ -2,6 +2,7 @@ package tracking_service
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/mfmahendr/url-shortener-backend/internal/models"
@@ -15,6 +16,7 @@ func (t *TrackingServiceImpl) TrackClick(ctx context.Context, shortID, ip, userA
 	}
 	// redis
 	if err := t.redis.Incr(ctx, "clicks:"+shortID).Err(); err != nil {
+		log.Printf("redis incr failed key=clicks:%s err=%v", shortID, err)
 		return err
 	}
 
@@ -26,5 +28,10 @@ func (t *TrackingServiceImpl) TrackClick(ctx context.Context, shortID, ip, userA
 	}
 
 	// save to firestore
-	return t.firestore.AddClickLog(ctx, clickLog)
+	if err := t.firestore.AddClickLog(ctx, clickLog); err != nil {
+		log.Printf("AddClickLog failed short_id (%s) err: %v", shortID, err)
+		return err
+	}
+
+	return nil
 }
