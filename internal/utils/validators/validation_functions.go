@@ -7,5 +7,5 @@ import (
 )
 
 func CustomIDFormat(fl validator.FieldLevel) bool {
-		return regexp.MustCompile(`^[a-zA-Z0-9_-]{3,30}$`).MatchString(fl.Field().String())
+		return regexp.MustCompile(`^[a-zA-Z0-9]{3,30}$`).MatchString(fl.Field().String())
 }
