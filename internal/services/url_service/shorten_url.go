@@ -25,7 +25,7 @@ func (s *URLServiceImpl) Shorten(ctx context.Context, req dto.ShortenRequest) (s
 
 	// if CustomID is not provided, generate a new ID
 	if req.CustomID == "" {
-		req.CustomID, err = nanoid.New()
+		req.CustomID, err = nanoid.Generate("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 8)
 		if err != nil {
 			log.Println("Error generating ID:", err)
 			return "", shortlink_errors.ErrGenerateID
